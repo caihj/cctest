@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:sec="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<bean id="springSecurityFilterChain" class="org.springframework.security.web.FilterChainProxy">
+		<sec:filter-chain-map request-matcher="ant">
+			<sec:filter-chain pattern="/**"
+				filters="pay1payItgRequestFilter,sessionProxyFilter,scpFilter,anonyAuthFilter" />
+<!-- 				filters="pay1payItgRequestFilter,sessionProxyFilter,securityWrapperFilter,scpFilter,anonyAuthFilter" /> -->
+		</sec:filter-chain-map>
+	</bean>
+	<bean id="sessionProxyFilter" class="com.pay1pay.framework.session.BerbonSessionProxyFilter">
+		<property name="cookieName" value="${cookieName}" />
+		<property name="cookieDomain" value="${cookieDomain}" />
+		<property name="cookieMaxAge" value="${cookieMaxAge}"></property>
+		<property name="cookieHttpOnly" value="${cookieHttpOnly}"></property>
+		<property name="cookieSecure" value="${cookieSecure}"></property>
+	</bean>
+		<bean id="pay1payItgRequestFilter" class="com.pay1pay.framework.web.Pay1payItgRequestFilter" />
+	<!-- 安全filter,主要用于设置安全的cookie、header、redirect、ContextPath -->
+	<bean id="securityWrapperFilter"
+		class="com.pay1pay.framework.web.security.SecurityWrapperFilter"></bean>
+		
+
+	<bean id="scpFilter"
+		class="org.springframework.security.web.context.SecurityContextPersistenceFilter"></bean>
+
+	<bean id="anonyAuthFilter"
+		class="org.springframework.security.web.authentication.AnonymousAuthenticationFilter">
+		<constructor-arg value="test"></constructor-arg>
+	</bean>
+	
+	<!-- <bean id="sessionProxyFilter" class="com.pay1pay.framework.session.SessionProxyFilter"> 
+		<property name="cookieName" value="mchjsessionid" /> <property name="cookieDomain" 
+		value=".mch.pay1pay.com" /> <property name="cookieMaxAge" value="${cookieMaxAge}"></property> 
+		<property name="cookieHttpOnly" value="${cookieHttpOnly}"></property> <property 
+		name="cookieSecure" value="${cookieSecure}"></property> </bean> -->
+
+	<!-- 安全filter,主要用于设置安全的cookie、header、redirect、ContextPath -->
+	<!-- <bean id="securityWrapperFilter"
+		class="com.pay1pay.framework.web.security.SecurityWrapperFilter"></bean>
+	<bean id="scpFilter"
+		class="org.springframework.security.web.context.SecurityContextPersistenceFilter"></bean>
+
+	<bean id="anonyAuthFilter"
+		class="org.springframework.security.web.authentication.AnonymousAuthenticationFilter">
+		<constructor-arg value="test"></constructor-arg>
+	</bean>
+
+	<bean id="requestCache"
+		class="org.springframework.security.web.savedrequest.NullRequestCache" />
+
+	<bean id="httpRequestCache"
+		class="org.springframework.security.web.savedrequest.HttpSessionRequestCache">
+		<property name="createSessionAllowed" value="false" />
+	</bean>
+
+	<bean id="accessDeniedHandler"
+		class="org.springframework.security.web.access.AccessDeniedHandlerImpl">
+		<property name="errorPage" value="${errorPage}" />
+	</bean>
+
+	<bean id="securityInterceptor"
+		class="org.springframework.security.web.access.intercept.FilterSecurityInterceptor">
+		<property name="authenticationManager" ref="authenticationManager"></property>
+		<property name="accessDecisionManager" ref="affirmativeBased" />
+		<property name="securityMetadataSource" ref="invocationSecurityMetadataSource" />
+	</bean>
+	<bean id="authenticationManager"
+		class="com.pay1pay.framework.web.security.DefaultAuthenticationManager"></bean>
+	<bean id="affirmativeBased"
+		class="org.springframework.security.access.vote.AffirmativeBased">
+		<property name="decisionVoters">
+			<list>
+				<ref bean="expressionVoter" />
+			</list>
+		</property>
+	</bean>
+
+	<bean id="invocationSecurityMetadataSource"
+		class="com.pay1pay.framework.web.security.Pay1payFilterInvocationSecurityMetadataSource">
+		<property name="roleDefResource" value="classpath:security/role_defs.properties"></property>
+		<property name="interceptUrlResource" value="classpath:security/role_url.properties"></property>
+	</bean>
+
+
+	<bean id="expressionVoter"
+		class="com.pay1pay.framework.web.security.ELAccessDecisionVoter">
+	</bean> -->
+</beans>

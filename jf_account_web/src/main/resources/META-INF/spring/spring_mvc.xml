@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+
+	<!-- spring的属性加载器，加载properties文件中的属性 -->
+	<bean id="propertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="location">
+			<value>classpath:config.properties</value>
+		</property>
+		<property name="fileEncoding" value="utf-8" />
+	</bean>
+<!-- 	<bean id="sessionProxyFilter" class="com.pay1pay.framework.session.SessionProxyFilter4Berbon"> -->
+<!-- 		<property name="cookieName" value="berbonjsessionid" /> -->
+<!-- 		<property name="cookieDomain" value=".berbon.com" /> -->
+<!-- 		<property name="cookieMaxAge" value="${cookieMaxAge}"></property> -->
+<!-- 		<property name="cookieHttpOnly" value="${cookieHttpOnly}"></property> -->
+<!-- 		<property name="cookieSecure" value="${cookieSecure}"></property> -->
+<!-- 	</bean> -->
+	<bean id="messageSource"
+		class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basename" value="classpath:config" />
+		<property name="defaultEncoding" value="utf-8" />
+		<property name="cacheSeconds" value="30" />
+	</bean>
+
+	<!-- 自动扫描且只扫描@Controller -->
+	<context:component-scan base-package="com.berbon.jfaccount">
+		<context:include-filter type="annotation"
+			expression="org.springframework.stereotype.Controller" />
+		<context:include-filter type="annotation"
+			expression="org.springframework.web.bind.annotation.ControllerAdvice" />
+	</context:component-scan>
+	<!-- 错误码初始化 <bean id="errorCodeInitBean" class="com.sztx.user.web.controller.ErrorCodeInitBean" 
+		init-method="init"> </bean> -->
+	<bean
+		class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" />
+
+	<bean id="applicationContextUtils" class="com.pay1pay.framework.core.ApplicationContextUtils">
+	</bean>
+
+	<bean
+		class="org.springframework.web.servlet.mvc.support.ControllerClassNameHandlerMapping" />
+	<bean
+		class="org.springframework.web.servlet.mvc.annotation.DefaultAnnotationHandlerMapping" />
+	<!-- velocity模板渲染设置 -->
+	<bean id="velocityConfigurer"
+		class="com.pay1pay.framework.web.view.Pay1payVelocityConfigurer">
+		<property name="resourceLoaderPath" value="file:${template.path}" />
+		<property name="velocityProperties">
+			<props>
+				<prop key="input.encoding">${velocity.input.encoding}</prop>
+				<prop key="output.encoding">${velocity.output.encoding}</prop>
+				<prop key="contentType">${velocity.contentType}</prop>
+				<prop key="file.resource.loader.cache">${velocity.file.resource.loader.cache}</prop>
+				<prop key="file.resource.loader.modificationCheckInterval">${velocity.file.resource.loader.modificationCheckInterval}
+				</prop>
+				<prop key="velocimacro.library">${velocity.velocimacro.library}</prop>
+				<prop key="velocimacro.library.autoreload">${velocity.velocimacro.library.autoreload}</prop>
+				<prop key="runtime.log.logsystem.class">${velocity.runtime.log.logsystem.class}</prop>
+				<prop key="runtime.log">${velocity.runtime.log}</prop>
+				<prop key="runtime.log.error.stacktrace">${velocity.runtime.log.error.stacktrace}</prop>
+				<prop key="runtime.log.warn.stacktrace">${velocity.runtime.log.warn.stacktrace}</prop>
+				<prop key="runtime.log.info.stacktrace">${velocity.runtime.log.info.stacktrace}</prop>
+				<prop key="runtime.log.invalid.reference">${velocity.runtime.log.invalid.reference}</prop>
+				<prop key="parser.pool.size">${velocity.parser.pool.size}</prop>
+			</props>
+		</property>
+	</bean>
+
+	<bean id="viewResolver"
+		class="com.pay1pay.framework.web.view.Pay1payVelocityLayoutViewResolver">
+		<property name="cache" value="true" />
+		<property name="suffix" value=".vm" />
+		<property name="layoutUrl" value="layout/layout.vm" />
+		<property name="contentType" value="${velocity.contentType}"></property>
+		<property name="viewClass"
+			value="com.pay1pay.framework.web.view.Pay1payVelocityLayoutView" />
+		<property name="toolboxConfigLocation" value="/WEB-INF/velocity/velocity_toolbox.xml" />
+	</bean>
+	 <!--配置拦截URL请求-->
+ 	 <!--<mvc:interceptors>-->
+		<!--<mvc:interceptor>-->
+			<!--&lt;!&ndash; 默认所有的请求都进行拦截 &ndash;&gt;-->
+			<!--<mvc:mapping path="/report/*"/>-->
+			<!--<mvc:mapping path="/fuelcard/*" />-->
+			<!--<mvc:mapping path="/mobiledata/*" />-->
+			<!--<mvc:mapping path="/broadband/*" />-->
+			<!--<mvc:mapping path="/007bao/*" />-->
+		    <!--<mvc:mapping path="/mobilebatch/*"/>-->
+		    <!--<mvc:mapping path="/etcinfo/*"/>-->
+		     <!--<mvc:mapping path="/sztcard/*"/>-->
+			<!--&lt;!&ndash; 特殊请求不进行都进行拦截 &ndash;&gt;-->
+			<!--<mvc:exclude-mapping path="/fuelcard/login.htm"/>-->
+			<!--<mvc:exclude-mapping path="/account/*"/>-->
+			<!--<bean class="com.berbon.jfaccountcommen.CheckLoginInterceptor" />-->
+		<!--</mvc:interceptor>-->
+	<!--</mvc:interceptors>-->
+	<!-- json解析处理相关依赖 -->
+	<bean id="jsonXssObjectMapper"
+		class="com.pay1pay.framework.web.security.JsonEscapeObjectMapper" />
+
+	<bean id="jacksonMessageConverter"
+		class="com.pay1pay.framework.web.spring.Pay1payMappingJackson2HttpMessageConverter">
+		<property name="objectMapper" ref="jsonXssObjectMapper" />
+	</bean>
+ 	<bean id="multipartResolver"  
+          class="org.springframework.web.multipart.commons.CommonsMultipartResolver">  
+       <!--  1024*200即200k   -->
+        <property name="maxUploadSize" value="1024000"/>
+       <!--  resolveLazily属性启用是为了推迟文件解析，以便在UploadAction 中捕获文件大小异常   -->
+        <property name="resolveLazily" value="true"/>    
+    </bean>  
+ 
+	<bean name="handlerAdapter"
+		class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<ref bean="jacksonMessageConverter" />
+			</list>
+		</property>
+		<property name="order" value="0" />
+	</bean>
+</beans>

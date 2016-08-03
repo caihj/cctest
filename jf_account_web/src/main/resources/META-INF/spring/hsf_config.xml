@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" 
+	xmlns:hsf="http://code.pay1pay.com/schema/hsf"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://code.pay1pay.com/schema/hsf http://code.pay1pay.com/schema/hsf/hsf.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd">
+
+	<hsf:application name="test" owner="pay1pay"></hsf:application>
+	<hsf:monitor protocol="registry" />
+	<hsf:protocol name="hsf" heartbeat="5000"/>
+	<hsf:provider threads="20"/>
+	<!-- 依赖检查 true:检查 false:不检查  线上为检查 -->
+	<hsf:consumer retries="0" check="false" loadbalance="roundrobin"></hsf:consumer>
+	
+</beans>

@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="${scan:-true}" scanPeriod="${scanPeriod:-60 second}" debug="false">
+	<property resource="config.properties" />
+	<contextName>user-web</contextName>
+	<conversionRule conversionWord="msgno" converterClass="com.pay1pay.framework.core.log.LogMsgNoConverter" />
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%-5level|%logger{20}-%msg%n</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>DEBUG</level>
+		</filter>
+	</appender>
+	<appender name="file"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${logfile_path}/${logfile_name}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<charset>UTF-8</charset>
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%-5level|%logger{20}-%msg%n</pattern>
+		</encoder>
+	</appender>
+	
+	<!-- web-log  web日志监控，主要是动态HTM耗时等   -->
+	<appender name="webappender_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+		<file>${logfile_path}/${logfile_name}-weblog.log</file>
+		<Encoding>UTF-8</Encoding>  
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-weblog-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%msg%n</pattern>
+		</encoder>
+		<closeUpFlag>${closeUpFlag}</closeUpFlag>
+		<gatherType>web-log</gatherType>
+		<sysName>${sysName}</sysName>
+	</appender>
+
+	<appender name="weblog_perf" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="webappender_perf" />
+		<includeCallerData>true</includeCallerData>
+		<queueSize>256</queueSize>
+	</appender>
+	
+	<!-- jetty-pool  jetty连接池监控   -->
+	<appender name="jettypool_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+		<file>${logfile_path}/${logfile_name}-jettypool.log</file>
+		<Encoding>UTF-8</Encoding>  
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-jettypool-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%msg%n</pattern>
+		</encoder>
+		<closeUpFlag>${closeUpFlag}</closeUpFlag>
+		<gatherType>jetty-pool</gatherType>
+		<sysName>${sysName}</sysName>
+	</appender>
+
+	<appender name="jettypoollog_perf" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="jettypool_perf" />
+		<includeCallerData>true</includeCallerData>
+		<queueSize>256</queueSize>
+	</appender>
+	
+     <!-- facade-log 业务监控日志   -->
+     <appender name="facaderoll_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+            <file>${logfile_path}/${logfile_name}-facade.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+            <fileNamePattern>${logfile_path}/${logfile_name}-facade-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+           <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">       
+                 <!-- or whenever the file size reaches 100MB -->
+                 <maxFileSize>50MB</maxFileSize>
+           </timeBasedFileNamingAndTriggeringPolicy>
+           </rollingPolicy>
+            <encoder>
+                  <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+                   <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%msg%n</pattern>
+                   <charset>UTF-8</charset>
+           </encoder>
+           <closeUpFlag>${closeUpFlag}</closeUpFlag>
+           <gatherType>facade-log</gatherType>
+           <sysName>${sysName}</sysName>
+     </appender>
+ 
+     <appender name="facadelog_perf" class="ch.qos.logback.classic.AsyncAppender">
+              <appender-ref ref="facaderoll_perf" />
+              <includeCallerData>true</includeCallerData>
+              <queueSize>256</queueSize>
+     </appender>
+
+    <logger name="monitor.facade" level="INFO" additivity="false">
+             <appender-ref ref="facadelog_perf" />
+    </logger>
+	
+	<logger name="monitor.jettypool" level="INFO" additivity="false">
+		<appender-ref ref="jettypoollog_perf" />
+	</logger>
+	
+	<logger name="monitor.web" level="INFO" additivity="false">
+		<appender-ref ref="weblog_perf" />
+	</logger>
+	
+	<logger name="com.pay1pay.framework.session" level="INFO"/>
+	
+	<logger name="org.springframework.data.redis" level="INFO"/>
+
+	<root level="INFO">
+		<appender-ref ref="console" />
+		<appender-ref ref="file" />
+	</root>
+
+</configuration>
