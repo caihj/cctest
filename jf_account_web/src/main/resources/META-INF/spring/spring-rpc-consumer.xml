@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xmlns:dubbo="http://code.alibabatech.com/schema/dubbo"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+	     http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+	     http://code.alibabatech.com/schema/dubbo
+	     http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
+	 
+	<bean id="tradeRpcService" class="com.sztx.se.rpc.dubbo.client.DubboClient">
+		<property name="interfaceName" value="com.sztx.pay.center.rpc.api.service.TradeRpcService" />
+    	<property name="protocol" value="dubbo" />
+    	<property name="isCheck" value="false" />
+	</bean>
+	
+	<bean id="queryUserInfoService" class="com.sztx.se.rpc.dubbo.client.DubboClient">
+		<property name="interfaceName" value="com.sztx.usercenter.rpc.api.service.QueryUserInfoService" />
+    	<property name="protocol" value="dubbo" />
+    	<property name="isCheck" value="false" />
+	</bean>
+
+	<bean id="accountRpcService" class="com.sztx.se.rpc.dubbo.client.DubboClient">
+		<property name="interfaceName" value="com.sztx.pay.center.rpc.api.service.AccountRpcService" />
+		<property name="protocol" value="dubbo" />
+		<property name="isCheck" value="false" />
+	</bean>
+
+	<bean id="queryService" class="com.sztx.se.rpc.dubbo.client.DubboClient">
+		<property name="interfaceName" value="com.sztx.pay.center.rpc.api.service.QueryService" />
+		<property name="protocol" value="dubbo" />
+		<property name="isCheck" value="false" />
+	</bean>
+
+	<bean id="payFlowRpcService" class="com.sztx.se.rpc.dubbo.client.DubboClient">
+		<property name="interfaceName" value="com.sztx.pay.center.rpc.api.service.PayFlowRpcService"/>
+		<property name="protocol" value="dubbo" />
+		<property name="isCheck" value="false" />
+	</bean>
+
+	<bean id="bankRpcService" class="com.sztx.se.rpc.dubbo.client.DubboClient">
+		<property name="interfaceName" value="com.sztx.pay.center.rpc.api.service.BankRpcService"/>
+		<property name="protocol" value="dubbo" />
+		<property name="isCheck" value="false" />
+	</bean>
+
+
+
+
+
+</beans>

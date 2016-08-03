@@ -9,7 +9,7 @@
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
 	<artifactId>jf_account_web</artifactId>
-	<!-- <name>berbon-agentinner-web</name> -->
+	<!-- <name>berbon-jfaccount-web</name> -->
 	<url>http://maven.apache.org</url>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -150,7 +150,67 @@
 			<groupId>com.berbon.etc</groupId>
 			<artifactId>berbon-etc-facade</artifactId>
 		</dependency>
-		
+
+		<dependency>
+			<groupId>com.sztx.systemframework</groupId>
+			<artifactId>se</artifactId>
+			<version>1.1.7</version>
+			<exclusions>
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-core</artifactId>
+				</exclusion>
+
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-context-support</artifactId>
+				</exclusion>
+
+				<exclusion>
+					<groupId>commons-io</groupId>
+					<artifactId>commons-io</artifactId>
+				</exclusion>
+
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>servlet-api</artifactId>
+				</exclusion>
+
+				<exclusion>
+					<groupId>javax.servlet</groupId>
+					<artifactId>javax.servlet-api</artifactId>
+				</exclusion>
+
+				<exclusion>
+					<groupId>javax.servlet.jsp</groupId>
+					<artifactId>jsp-api</artifactId>
+				</exclusion>
+
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-aop</artifactId>
+				</exclusion>
+
+				<exclusion>
+					<groupId>org.springframework</groupId>
+					<artifactId>spring-beans</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<!-- 支付系统 -->
+		<dependency>
+			<groupId>com.sztx.pay.center</groupId>
+			<artifactId>pay-center-rpc-api</artifactId>
+			<version>2.3.1-SNAPSHOT</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.sztx.servicecenter.user-center</groupId>
+			<artifactId>user-center-rpc-api</artifactId>
+			<version>1.5.1</version>
+		</dependency>
+
 	</dependencies>
 	<build>
 		<finalName>jfaccount-web</finalName>
@@ -194,7 +254,7 @@
 			</plugin>
 			<!-- <plugin> <groupId>com.upload.plugin</groupId> <artifactId>upload-maven-plugin</artifactId> 
 				<version>1.0.0-SNAPSHOT</version> <configuration> <servers> <server> <host>10.2.50.32</host> 
-				<username>apps</username> <password>apps88877007</password> <location>/data/apps/berbon-agentinner-web</location> 
+				<username>apps</username> <password>apps88877007</password> <location>/data/apps/berbon-jfaccount-web</location>
 				<port>22</port> </server> </servers> </configuration> </plugin> -->
 		</plugins>
 	</build>

@@ -39,7 +39,7 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 	private MsgSrvProxyFacade msgSrvProxyFacade;
 
 	@Override
-	public  boolean    preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
+	public  boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
 		try {
 			response.setContentType("text/html;charset=UTF-8");
 			String sessionId = getCookie(request, constant.getBerbonsessionId());
