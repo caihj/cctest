@@ -26,6 +26,11 @@
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>springServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	<!--
+	<servlet-mapping>
+		<servlet-name>springServlet</servlet-name>
 		<url-pattern>*.htm</url-pattern>
 	</servlet-mapping>
 	<servlet-mapping>
@@ -52,7 +57,7 @@
 		<servlet-name>springServlet</servlet-name>
 		<url-pattern>*.zip</url-pattern>
 	</servlet-mapping>
-
+-->
 
 	<!--Spring ApplicationContext 载入 -->
 	<listener>

@@ -109,6 +109,10 @@
 		class="com.pay1pay.framework.web.spring.Pay1payMappingJackson2HttpMessageConverter">
 		<property name="objectMapper" ref="jsonXssObjectMapper" />
 	</bean>
+
+	<bean  id="JSONConverter" class="com.berbon.jfaccount.utils.JSONConverter">
+
+	</bean>
  	<bean id="multipartResolver"  
           class="org.springframework.web.multipart.commons.CommonsMultipartResolver">  
        <!--  1024*200即200k   -->
@@ -121,7 +125,7 @@
 		class="org.springframework.web.servlet.mvc.annotation.AnnotationMethodHandlerAdapter">
 		<property name="messageConverters">
 			<list>
-				<ref bean="jacksonMessageConverter" />
+				<ref bean="JSONConverter" />
 			</list>
 		</property>
 		<property name="order" value="0" />

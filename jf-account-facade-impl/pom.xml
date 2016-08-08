@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>jf_account_proj</artifactId>
+        <groupId>com.berbon.jfaccount</groupId>
+        <version>0.0.1-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>jf-account-facade-impl</artifactId>
+
+    <dependencies>
+
+
+        <dependency>
+            <groupId>com.berbon.jfaccount</groupId>
+            <artifactId>jf-account-facade</artifactId>
+            <version>0.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.pay1pay</groupId>
+            <artifactId>hsf-all</artifactId>
+        </dependency>
+
+
+        <!-- hsf框架基础依赖 -->
+        <dependency>
+            <groupId>com.pay1pay.framework</groupId>
+            <artifactId>framework-core</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.tomcat</groupId>
+            <artifactId>tomcat-jdbc</artifactId>
+            <version>8.0.9</version>
+        </dependency>
+
+
+    </dependencies>
+
+
+</project>

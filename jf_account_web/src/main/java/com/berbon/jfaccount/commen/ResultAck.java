@@ -6,7 +6,8 @@ package com.berbon.jfaccount.commen;
 public  enum ResultAck {
 
     succ("0","成功"),
-    fail("-1","失败");
+    fail("-1","失败"),
+    para_error("-2","参数错误");
 
 
     ResultAck(String code,String desc){

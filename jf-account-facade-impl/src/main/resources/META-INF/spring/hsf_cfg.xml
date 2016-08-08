@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc"
+	xmlns:hsf="http://code.pay1pay.com/schema/hsf"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://code.pay1pay.com/schema/hsf http://code.pay1pay.com/schema/hsf/hsf.xsd">
+	
+	<hsf:application name="berbon-managplatform-impl" owner="sztx"></hsf:application>
+	<hsf:monitor protocol="registry" />
+	<hsf:protocol name="hsf" heartbeat="5000" />
+	<hsf:consumer retries="0" timeout="10000" check="false"
+		loadbalance="roundrobin"></hsf:consumer>
+	<!-- 为hsf框架配置回调入口，映射facade -->
+	<hsf:service interface="com.berbon.jfaccount.facade.AccountFacade" ref="accountFacadeImpl" />
+
+</beans>

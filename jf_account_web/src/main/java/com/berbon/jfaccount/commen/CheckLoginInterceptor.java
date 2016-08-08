@@ -95,6 +95,10 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 		Users users = null;
 		if (userString != null) {
 			users = JSONObject.parseObject(userString, Users.class);
+		}else{
+			//for test
+			users =  new Users();
+			users.setUserCode("83986576");
 		}
 		return users;
 	}

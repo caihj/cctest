@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="${scan:-true}" scanPeriod="${scanPeriod:-60 second}" debug="false">
+	<property resource="config.properties" />
+	<contextName>user-proj-app</contextName>
+	<conversionRule conversionWord="msgno" converterClass="com.pay1pay.framework.core.log.LogMsgNoConverter" />
+
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%-5level|%logger{20}-%msg%n</pattern>
+		</encoder>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>DEBUG</level>
+		</filter>
+	</appender>
+	<appender name="file"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${logfile_path}/${logfile_name}.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-%d{yyyy-MM-dd}.%i.log
+			</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy
+				class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<Encoding>UTF-8</Encoding>  
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%-5level|%logger{20}-%msg%n</pattern>
+		</encoder>
+	</appender>
+	
+	<!-- jdbc sql 语句监控   -->
+	<appender name="sqlroll_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+		<file>${logfile_path}/${logfile_name}-sql.log</file>
+		<Encoding>UTF-8</Encoding>  
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-sql-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|-%msg%n</pattern>
+		</encoder>
+		<closeUpFlag>${closeUpFlag}</closeUpFlag>
+		<gatherType>jdbc-sql</gatherType>
+		<sysName>${sysName}</sysName>
+	</appender>
+
+	<appender name="jdbcsql_perf" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="sqlroll_perf" />
+		<includeCallerData>true</includeCallerData>
+		<queueSize>256</queueSize>
+	</appender>
+	
+	<!-- facade-log 业务监控日志   -->
+	<appender name="facaderoll_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+		<file>${logfile_path}/${logfile_name}-facade.log</file>
+		<Encoding>UTF-8</Encoding>  
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-facade-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|-%msg%n</pattern>
+		</encoder>
+		<closeUpFlag>${closeUpFlag}</closeUpFlag>
+		<gatherType>facade-log</gatherType>
+		<sysName>${sysName}</sysName>
+	</appender>
+
+	<appender name="facadelog_perf" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="facaderoll_perf" />
+		<includeCallerData>true</includeCallerData>
+		<queueSize>256</queueSize>
+	</appender>
+	
+	<!-- hsf-pool hsf线程池监控   -->
+	<appender name="hsfpool_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+		<file>${logfile_path}/${logfile_name}-hsfpool.log</file>
+		<Encoding>UTF-8</Encoding>  
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-hsfpool-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|-%msg%n</pattern>
+		</encoder>
+		<closeUpFlag>${closeUpFlag}</closeUpFlag>
+		<gatherType>hsf-pool</gatherType>
+		<sysName>${sysName}</sysName>
+	</appender>
+
+	<appender name="hsfpoollog_perf" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="hsfpool_perf" />
+		<includeCallerData>true</includeCallerData>
+		<queueSize>256</queueSize>
+	</appender>
+	
+	<!-- jdbc-pool  数据库连接池监控   -->
+	<appender name="jdbcpool_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+		<file>${logfile_path}/${logfile_name}-jdbcpool.log</file>
+		<Encoding>UTF-8</Encoding>  
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+			<fileNamePattern>${logfile_path}/${logfile_name}-jdbcpool-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">        <!-- or whenever the file size reaches 100MB -->
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<encoder>
+			<!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|-%msg%n</pattern>
+		</encoder>
+		<closeUpFlag>${closeUpFlag}</closeUpFlag>
+		<gatherType>jdbc-pool</gatherType>
+		<sysName>${sysName}</sysName>
+	</appender>
+
+	<appender name="jdbcpoollog_perf" class="ch.qos.logback.classic.AsyncAppender">
+		<appender-ref ref="jdbcsql_perf" />
+		<includeCallerData>true</includeCallerData>
+		<queueSize>256</queueSize>
+	</appender>
+	
+	     <!-- facade-log 业务监控日志   -->
+     <appender name="facaderoll_perf" class="com.pay1pay.monitor.agent.logback.MonitorRollingFileAppender">
+            <file>${logfile_path}/${logfile_name}-facade.log</file>
+            <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">      <!-- rollover daily -->
+            <fileNamePattern>${logfile_path}/${logfile_name}-facade-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+           <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">       
+                 <!-- or whenever the file size reaches 100MB -->
+                 <maxFileSize>50MB</maxFileSize>
+           </timeBasedFileNamingAndTriggeringPolicy>
+           </rollingPolicy>
+            <encoder>
+                  <!--格式化输出：%d表示日期，%thread表示线程名，%-5level：级别从左显示5个字符宽度%msg：日志消息，%n是换行符 -->
+                   <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS}|%msgno|%thread|%msg%n</pattern>
+                   <charset>UTF-8</charset>
+           </encoder>
+          <closeUpFlag>${closeUpFlag}</closeUpFlag>
+           <gatherType>facade-log</gatherType>
+           <sysName>${sysName}</sysName>
+     </appender>
+ 
+     <appender name="facadelog_perf" class="ch.qos.logback.classic.AsyncAppender">
+              <appender-ref ref="facaderoll_perf" />
+              <includeCallerData>true</includeCallerData>
+              <queueSize>256</queueSize>
+     </appender>
+     
+	<logger name="monitor.facade" level="INFO" additivity="false">
+		<appender-ref ref="facadelog_perf" />
+	</logger>
+	
+	<logger name="monitor.hsfpool" level="INFO" additivity="false">
+		<appender-ref ref="hsfpoollog_perf" />
+	</logger>
+	
+	<logger name="monitor.jdbcpool" level="INFO" additivity="false">
+		<appender-ref ref="jdbcpoollog_perf" />
+	</logger>
+
+	<logger name="org.spring" level="INFO"/>
+	<logger name="jdbc.sqltiming" level="INFO" additivity="false">
+		<appender-ref ref="sqlroll_perf" />
+	</logger>
+	
+	<logger name="jdbc.sqlonly" level="OFF" />
+	<logger name="jdbc.audit" level="OFF" />
+	<logger name="jdbc.connection" level="OFF" />
+	<logger name="jdbc.resultset" level="OFF" />
+	<root level="INFO">
+		<appender-ref ref="console" />
+		<appender-ref ref="file" />
+	</root>
+</configuration>

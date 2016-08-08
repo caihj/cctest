@@ -43,8 +43,11 @@
 		<property name="isCheck" value="false" />
 	</bean>
 
-
-
+	<!--<bean id="bankPayLimitRpcService" class="com.sztx.se.rpc.dubbo.client.DubboClient">-->
+		<!--<property name="interfaceName" value="com.sztx.pay.center.rpc.api.service.BankPayLimitRpcService"/>-->
+		<!--<property name="protocol" value="dubbo" />-->
+		<!--<property name="isCheck" value="false" />-->
+	<!--</bean>-->
 
 
 </beans>
