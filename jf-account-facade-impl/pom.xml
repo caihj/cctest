@@ -21,25 +21,206 @@
         </dependency>
 
         <dependency>
-            <groupId>com.pay1pay</groupId>
-            <artifactId>hsf-all</artifactId>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest-core</artifactId>
+        </dependency>
+        <!-- <dependency> <groupId>javax.servlet</groupId> <artifactId>javax.servlet-api</artifactId>
+            <scope>provided</scope> </dependency> -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
         </dependency>
 
+        <dependency>
+            <groupId>commons-net</groupId>
+            <artifactId>commons-net</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-test</artifactId>
+        </dependency>
 
+        <dependency>
+            <groupId>ant</groupId>
+            <artifactId>ant</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-all</artifactId>
+        </dependency>
         <!-- hsf框架基础依赖 -->
         <dependency>
             <groupId>com.pay1pay.framework</groupId>
             <artifactId>framework-core</artifactId>
+            <exclusions>
+                <exclusion>
+                    <groupId>commons-logging</groupId>
+                    <artifactId>commons-logging</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- 分布式session -->
+        <dependency>
+            <groupId>com.pay1pay.framework</groupId>
+            <artifactId>framework-httpsession</artifactId>
+        </dependency>
+        <!-- 监控组件 -->
+        <dependency>
+            <groupId>com.pay1pay.monitor</groupId>
+            <artifactId>monitor-agent-logback</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pay1pay.systemcode</groupId>
+            <artifactId>systemcode-comm-util</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pay1pay.systemcode</groupId>
+            <artifactId>systemcode-facade</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pay1pay.systemcode</groupId>
+            <artifactId>systemcode-model</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.pay1pay.systemcode</groupId>
+            <artifactId>systemcode-comm-util</artifactId>
+            <classifier>sources</classifier>
+        </dependency>
+        <!--berbon工具 -->
+        <dependency>
+            <groupId>com.berbon.util</groupId>
+            <artifactId>berbon-util</artifactId>
+        </dependency>
+        <!-- <dependency> <groupId>commons-net</groupId> <artifactId>commons-net</artifactId>
+            </dependency> -->
+        <!--berbon用户 -->
+        <dependency>
+            <groupId>com.berbon.user</groupId>
+            <artifactId>berbon-user-facade</artifactId>
+        </dependency>
+        <!--订单系统 -->
+
+
+        <!--msgrv代理 -->
+        <dependency>
+            <groupId>com.berbon.msgsrv.proxy</groupId>
+            <artifactId>msgsrv-proxy-facade</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.sztx.systemframework</groupId>
+            <artifactId>se</artifactId>
+            <version>1.1.7</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-core</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-context-support</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>commons-io</groupId>
+                    <artifactId>commons-io</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>servlet-api</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>javax.servlet</groupId>
+                    <artifactId>javax.servlet-api</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>javax.servlet.jsp</groupId>
+                    <artifactId>jsp-api</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-aop</artifactId>
+                </exclusion>
+
+                <exclusion>
+                    <groupId>org.springframework</groupId>
+                    <artifactId>spring-beans</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- 支付系统 -->
+        <dependency>
+            <groupId>com.sztx.pay.center</groupId>
+            <artifactId>pay-center-rpc-api</artifactId>
+            <version>2.3.1-SNAPSHOT</version>
         </dependency>
 
         <dependency>
-            <groupId>org.apache.tomcat</groupId>
-            <artifactId>tomcat-jdbc</artifactId>
-            <version>8.0.9</version>
+            <groupId>com.sztx.servicecenter.user-center</groupId>
+            <artifactId>user-center-rpc-api</artifactId>
+            <version>1.5.1</version>
         </dependency>
-
 
     </dependencies>
 
+    <build>
+        <finalName>jfaccount-facade-impl</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptor>src/main/assembly/assembly.xml</descriptor>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- jar打包相关插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                        </manifest>
+                    </archive>
+                    <!-- web打包方式与服务端略有不同 -->
+                    <excludes>
+                        <exclude>conf/**</exclude>
+                        <exclude>*.properties</exclude>
+                        <exclude>*.xml</exclude>
+                        <exclude>webapp/**</exclude>
+                        <exclude>WEB-INF/**</exclude>
+                        <exclude>security/**</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <!-- <plugin> <groupId>com.upload.plugin</groupId> <artifactId>upload-maven-plugin</artifactId>
+                <version>1.0.0-SNAPSHOT</version> <configuration> <servers> <server> <host>10.2.50.32</host>
+                <username>apps</username> <password>apps88877007</password> <location>/data/apps/berbon-jfaccount-web</location>
+                <port>22</port> </server> </servers> </configuration> </plugin> -->
+        </plugins>
+    </build>
 
 </project>

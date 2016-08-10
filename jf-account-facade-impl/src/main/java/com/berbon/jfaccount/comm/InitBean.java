@@ -10,8 +10,14 @@ import org.springframework.stereotype.Component;
 @Component
 public class InitBean {
 
-    @Value("vv")
-    private String value;
+    @Value("frontNotifyUrl")
+    public String frontUrl;
+
+    @Value("bakNotifyUrl")
+    public String bakNotifyUrl;
+
+    @Value("newPayKey")
+    public String newPayKey;
 
 
 

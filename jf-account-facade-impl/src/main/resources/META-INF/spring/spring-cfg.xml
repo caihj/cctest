@@ -9,7 +9,7 @@
 		http://code.pay1pay.com/schema/hsf http://code.pay1pay.com/schema/hsf/hsf.xsd
 		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd">
 	<mvc:annotation-driven/>
-	<context:component-scan base-package="com.berbon.managplatform"/>
+	<context:component-scan base-package="com.berbon.jfaccount"/>
 	<bean
 		class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" />
 	<bean id="applicationContextAware" class="com.pay1pay.framework.core.ApplicationContextUtils" />

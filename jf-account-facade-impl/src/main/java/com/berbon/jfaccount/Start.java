@@ -3,7 +3,8 @@ package com.berbon.jfaccount;
 
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
-
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 
 /**

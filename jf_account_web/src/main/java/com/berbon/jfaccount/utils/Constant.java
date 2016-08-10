@@ -9,8 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.stereotype.Component;
 
-import com.berbon.ordersystem.pojo.CommonConstant;
-import com.berbon.ordersystem.pojo.OrderStateMapping;
+
 import com.berbon.util.yhbf.YhbfUtil;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
@@ -118,26 +117,7 @@ public class Constant implements InitializingBean {
 	 */
 
 	public void initOrderStateMap() {
-		orderStateMap.put(OrderState.CHARGE_SUCCESS,
-				OrderStateMapping.order_success.getOrderState());
-		orderStateMap.put(OrderState.CHARGEING,
-				OrderStateMapping.order_handling.getOrderState());
-		orderStateMap.put(OrderState.CHARGE_FAILD,
-				OrderStateMapping.order_fail.getOrderState());
-		orderStateMap.put(OrderState.UNKONE_CHARGEING,
-				OrderStateMapping.order_unknown.getOrderState());
-		orderStateMap.put(OrderState.NOTPAY, CommonConstant.unpay);
-		orderStateMap.put(OrderState.NOTPAY,
-				OrderStateMapping.order_start.getOrderState());
-		orderStateMap.put(OrderState.PAY_FAILD, CommonConstant.failPay);
-		orderStateMap.put(OrderState.PAYING, CommonConstant.paying);
-		orderStateMap.put(OrderState.UNKONE_PAY, CommonConstant.unknownPay);
-		orderStateMap.put(OrderState.REFUNDING, CommonConstant.refund_handling);
-		orderStateMap.put(OrderState.REFUND_SUCCESS,
-				CommonConstant.refund_success);
-		orderStateMap.put(OrderState.REFUND_FAILD, CommonConstant.refund_fail);
-		orderStateMap.put(OrderState.UNKONE_REFUND,
-				CommonConstant.refund_unknown);
+
 
 	}
 

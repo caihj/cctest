@@ -1,6 +1,7 @@
 package com.berbon.jfaccount.Dao;
 
 import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
+import com.sztx.util.mapper.BaseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
@@ -28,8 +29,8 @@ public class ChargeOrderDao {
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
-        final String sql = "INSERT INTO `berbon`.`account_charge_order`\n" +
-                "(`id`,\n" +
+        final String sql = "INSERT INTO `account_charge_order`\n" +
+                "("+
                 "`chargeBussOrderNo`,\n" +
                 "`createTime`,\n" +
                 "`chargeUserCode`,\n" +
@@ -88,10 +89,24 @@ public class ChargeOrderDao {
             }
         }, keyHolder);
 
-        long id= keyHolder.getKey().intValue();
+        long id= keyHolder.getKey().longValue();
         info.setId(id);
 
         return info;
+    }
+
+    public String hello(){
+        return slaveTemplate.queryForObject("select now()",String.class);
+    }
+
+
+    public ChargeOrderInfo getByeTradeOrderNo(String tradeOrderId){
+
+        String sql = "select * from account_charge_order where tradeOrderId=\""+tradeOrderId+"\"";
+
+        ChargeOrderInfo order = slaveTemplate.queryForObject(sql,new BaseMapper<ChargeOrderInfo>(ChargeOrderInfo.class));
+
+        return order;
     }
 
 }

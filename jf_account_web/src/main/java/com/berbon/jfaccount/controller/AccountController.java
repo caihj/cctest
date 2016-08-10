@@ -61,7 +61,10 @@ public class AccountController {
 
     private BankRpcService bankRpcService;
 
-    //private BankPayLimitRpcService  bankPayLimitRpcService;
+    private BankPayLimitRpcService  bankPayLimitRpcService;
+
+    @Autowired
+    private com.berbon.jfaccount.facade.AccountFacade accountFacade;
 
     @ModelAttribute
     public  void init(){
@@ -71,7 +74,22 @@ public class AccountController {
         queryService = dubboClient.getDubboClient("queryService");
         payFlowRpcService = dubboClient.getDubboClient("payFlowRpcService");
         bankRpcService = dubboClient.getDubboClient("bankRpcService");
-       // bankPayLimitRpcService = dubboClient.getDubboClient("bankPayLimitRpcService");
+        bankPayLimitRpcService = dubboClient.getDubboClient("bankPayLimitRpcService");
+    }
+
+    /**
+     * session test
+     * @return
+     */
+    @RequestMapping(value = "/sessionTest" , method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult sessionTest(HttpServletRequest request){
+        JsonResult result = new JsonResult();
+        Users user = CheckLoginInterceptor.getUsers(request.getSession());
+        result.setResult(ResultAck.succ.getCode());
+        result.setRetinfo(ResultAck.succ.getDesc());
+        result.setData(user);
+        return result;
     }
 
     /**
@@ -228,16 +246,40 @@ public class AccountController {
         try {
             String pageNo = request.getParameter("pageNo");
             String pageSize = request.getParameter("pageSize");
+            String startDate = request.getParameter("startTime");
+            String endDate = request.getParameter("endTime");
+            String transferOrderId =request.getParameter("transferOrderId");
+            Date startD = null;
+            Date endD = null;
+
+            if(startDate!=null && startDate.trim().isEmpty()==false) {
+                startD =  new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
+            }
+
+            if(endDate!=null && endDate.trim().isEmpty()==false){
+                endD = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endDate+" 23:59:59");
+            }
+
 
             QueryOrderRequest queryReq = new QueryOrderRequest();
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
             queryReq.setPayerAccountId(user.getUserCode());
+            if(startD!=null)
+                queryReq.setStartTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startD));
+            if(endD!=null)
+                queryReq.setEndTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(endD));
+
+            if(transferOrderId!=null && transferOrderId.trim().isEmpty()==false){
+                queryReq.setTradeOrderId(transferOrderId);
+                queryReq.setStartTime(null);
+                queryReq.setEndTime(null);
+            }
 
             OrderTransferList records = queryService.findTransfer(queryReq, Integer.parseInt(pageNo), Integer.parseInt(pageSize));
 
             JSONObject json = new JSONObject();
             /**
-             * pageNo:1,
+             pageNo:1,
              pageSize:10,
              total:100,
              rows
@@ -302,10 +344,28 @@ public class AccountController {
         try {
             String pageNo = request.getParameter("pageNo");
             String pageSize = request.getParameter("pageSize");
+            String startDate = request.getParameter("startTime");
+            String endDate = request.getParameter("endTime");
+
+            Date startD = null;
+            Date endD = null;
+
+            if(startDate!=null && startDate.trim().isEmpty()==false) {
+                startD =  new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
+            }
+
+            if(endDate!=null && endDate.trim().isEmpty()==false){
+                endD = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endDate+" 23:59:59");
+            }
 
             QueryOrderRequest queryReq = new QueryOrderRequest();
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
             queryReq.setPayerAccountId(user.getUserCode());
+            if(startD!=null)
+                queryReq.setStartTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startD));
+            if(endD != null)
+                queryReq.setEndTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(endD));
+
 
             OrderRechargeList records = queryService.findRecharge(queryReq, Integer.parseInt(pageNo), Integer.parseInt(pageSize));
 
@@ -362,9 +422,23 @@ public class AccountController {
             String pageSize = request.getParameter("pageSize");
             String startDate = request.getParameter("startTime");
             String endDate = request.getParameter("endTime");
+            String tradeOrderNo = request.getParameter("tradeOrderNo");
+            String type = request.getParameter("type");
+            Date startD = null;
+            Date endD = null;
 
-            Date startD =  new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
-            Date endD = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endDate+" 23:59:59");
+            if(startDate!=null && startDate.trim().isEmpty()==false) {
+                startD =  new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
+            }else{
+                Calendar cal = Calendar.getInstance();
+                cal.add(Calendar.YEAR, -1);
+                startD = cal.getTime();
+            }
+            if(endDate!=null && endDate.trim().isEmpty()==false){
+                endD = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endDate+" 23:59:59");
+            }else{
+                endD = new Date();
+            }
 
             PayFlowRequest queryReq = new PayFlowRequest();
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
@@ -374,6 +448,16 @@ public class AccountController {
             queryReq.setStartDate(startD);
             queryReq.setEndDate(endD);
 
+            if(tradeOrderNo!=null && tradeOrderNo.trim().isEmpty()==false){
+                queryReq.setTradeOrderNo(tradeOrderNo);
+            }
+            if(type!=null && type.trim().isEmpty()==false){
+                if(type.equals("in")){
+                   // queryReq.setTradeOrderType();
+                }else if(type.equals("out")){
+                   // queryReq.setTradeOrderType();
+                }
+            }
 
             PayFlowResponse records = payFlowRpcService.findUserPayFlow(queryReq);
 
@@ -420,7 +504,7 @@ public class AccountController {
 
             json.put("payFlows",f_records);
 
-            result.setData(records);
+            result.setData(json);
             result.setResult(ResultAck.succ.getCode());
             result.setRetinfo(ResultAck.succ.getDesc());
         } catch (Exception e){
@@ -436,47 +520,91 @@ public class AccountController {
     /**
      * 获取支持的银行卡列表
      */
-//    @RequestMapping(value = "/dcBankList" , method ={ RequestMethod.POST, RequestMethod.GET})
-//    @ResponseBody
-//    public JsonResult  getDcBankList(HttpServletRequest request){
-//
-//        JsonResult result = new JsonResult();
-//
-//        try {
-//
-//            //网银支付
-//            List<BankInfo> ebankDCSeq = bankRpcService.findBankList(1);
-//            List<BankInfoDetail> ebankDeail = new ArrayList<>();
-//
-//            for(BankInfo info:ebankDCSeq){
-//                BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),1);
-//                ebankDeail.add(new BankInfoDetail(info,limit));
-//            }
-//
-//            //快捷支付
-//            List<BankInfo> expressDCSeq = bankRpcService.findBankList(2);
-//            List<BankInfoDetail> expressDCSeqDetail = new ArrayList<>();
-//            for(BankInfo info:expressDCSeq){
-//                BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),2);
-//                expressDCSeqDetail.add(new BankInfoDetail(info, limit));
-//            }
-//
-//            Map<String,Object> banks = new HashMap<>();
-//
-//            banks.put("ebankDCSeq",ebankDeail);
-//            banks.put("expressDCSeq",expressDCSeqDetail);
-//            banks.put("thirdPay",new ArrayList<>());
-//
-//            result.setData(banks);
-//            result.setResult(ResultAck.succ.getCode());
-//            result.setRetinfo(ResultAck.succ.getDesc());
-//        }
-//        catch (Exception e){
-//            logger.error("发生异常" + e);
-//            e.printStackTrace();
-//            result.setResult(ResultAck.fail.getCode());
-//            result.setRetinfo(ResultAck.fail.getDesc());
-//        }
-//        return result;
-//    }
+    @RequestMapping(value = "/dcBankList" , method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult  getDcBankList(HttpServletRequest request){
+
+        JsonResult result = new JsonResult();
+
+        try {
+
+            //网银支付
+            List<BankInfo> ebankDCSeq = bankRpcService.findBankList(1);
+            List<BankInfoDetail> ebankDeail = new ArrayList<>();
+
+            for(BankInfo info:ebankDCSeq){
+                BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),1);
+                ebankDeail.add(new BankInfoDetail(info,limit));
+            }
+
+            //快捷支付
+            List<BankInfo> expressDCSeq = bankRpcService.findBankList(2);
+            List<BankInfoDetail> expressDCSeqDetail = new ArrayList<>();
+            for(BankInfo info:expressDCSeq){
+                BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),2);
+                expressDCSeqDetail.add(new BankInfoDetail(info, limit));
+            }
+
+            Map<String,Object> banks = new HashMap<>();
+
+            banks.put("ebankDCSeq",ebankDeail);
+            banks.put("expressDCSeq",expressDCSeqDetail);
+            banks.put("thirdPay",new ArrayList<>());
+
+            result.setData(banks);
+            result.setResult(ResultAck.succ.getCode());
+            result.setRetinfo(ResultAck.succ.getDesc());
+        }
+        catch (Exception e){
+            logger.error("发生异常" + e);
+            e.printStackTrace();
+            result.setResult(ResultAck.fail.getCode());
+            result.setRetinfo(ResultAck.fail.getDesc());
+        }
+        return result;
+    }
+
+    /**
+     * 获取联系人
+     */
+    @RequestMapping(value = "/getContact" , method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult getContact(HttpServletRequest request){
+
+        JsonResult result = new JsonResult();
+
+        String loginName = request.getParameter("loginName");
+
+        if(loginName==null || loginName.trim().isEmpty()==true){
+            result.setResult(ResultAck.para_error.getCode());
+            result.setRetinfo(ResultAck.para_error.getDesc());
+            return result;
+        }
+
+        UserVO user = queryUserInfoService.getUserInfo(loginName);
+        result.setResult(ResultAck.succ.getCode());
+        result.setRetinfo(ResultAck.succ.getDesc());
+
+        if(user!=null){
+            JSONObject json = new JSONObject();
+            json.put("loginName",user.getUserCode());
+
+            String realName =user.getRealname();
+            if(realName!=null && realName.length()>0){
+                if(realName.length()==2){
+                    realName = "*"+realName.substring(1,2);
+                }else  if(realName.length()==3){
+                    realName = "*"+realName.substring(1,3);
+                }else if(realName.length()==4){
+                    realName = "**"+realName.substring(2,4);
+                }else{
+                    realName = "**"+realName.substring(2,realName.length());
+                }
+            }
+            json.put("realName",realName);
+            result.setData(json);
+        }
+
+        return result;
+    }
 }
