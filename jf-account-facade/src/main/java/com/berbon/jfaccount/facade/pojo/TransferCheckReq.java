@@ -1,11 +1,13 @@
 package com.berbon.jfaccount.facade.pojo;
 
-import com.sun.deploy.util.StringUtils;
+
+
+import java.io.Serializable;
 
 /**
  * Created by chj on 2016/8/10.
  */
-public class TransferCheckReq {
+public class TransferCheckReq implements Serializable {
 
     protected String fromUserCode;
     protected String toUserCode;

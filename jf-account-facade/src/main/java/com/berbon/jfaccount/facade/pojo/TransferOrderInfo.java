@@ -1,11 +1,12 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by chj on 2016/8/10.
  */
-public class TransferOrderInfo {
+public class TransferOrderInfo implements Serializable {
 
     protected   int	amount;
     protected   Date createTime;

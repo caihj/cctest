@@ -63,6 +63,8 @@ public class AccountController {
 
     private BankPayLimitRpcService  bankPayLimitRpcService;
 
+    private SettleRpcService settleRpcService;
+
     @Autowired
     private com.berbon.jfaccount.facade.AccountFacade accountFacade;
 
@@ -75,6 +77,7 @@ public class AccountController {
         payFlowRpcService = dubboClient.getDubboClient("payFlowRpcService");
         bankRpcService = dubboClient.getDubboClient("bankRpcService");
         bankPayLimitRpcService = dubboClient.getDubboClient("bankPayLimitRpcService");
+        settleRpcService = dubboClient.getDubboClient("settleRpcService");
     }
 
     /**
@@ -387,7 +390,7 @@ public class AccountController {
                 record.setAddTime(t.getAddTime());
                 record.setRechargeOrderId(t.getRechargeOrderId());
                 record.setRechargeChannelStr(t.getRechargeChannelStr());
-                record.setRechargeAmount((String)t.getRechargeAmount());
+                record.setRechargeAmount((String) t.getRechargeAmount());
                 record.setRechargeStatusStr(t.getRechargeStatusStr());
 
                 f_records.add(record);
@@ -496,7 +499,7 @@ public class AccountController {
 
                 record.setOtherAccount(otherAccount);
                 record.setType(intOrOut);
-                record.setAmount((t.getAmount()+0.0f)/100.0+"");
+                record.setAmount((t.getAmount() + 0.0f) / 100.0 + "");
                 //record.setBalance();
 
                 f_records.add(record);
@@ -607,4 +610,95 @@ public class AccountController {
 
         return result;
     }
+
+    /**
+     *检查银行卡信息
+     */
+    @RequestMapping(value = "/cardBinCheck" , method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult cardBinCheck(HttpServletRequest request){
+        JsonResult result = new JsonResult();
+
+        result.setResult(ResultAck.succ.getCode());
+        result.setRetinfo(ResultAck.succ.getDesc());
+
+        String cardno = request.getParameter("cardno");
+        String swiftCode = request.getParameter("swiftCode");
+
+        BankInfo info;
+        try{
+             info = bankRpcService.queryBankCardBin(cardno);
+        }catch (Exception e){
+            result.setResult(ResultAck.fail.getCode());
+            result.setRetinfo(ResultAck.fail.getDesc());
+            return result;
+        }
+
+        JSONObject json = new JSONObject();
+
+        if(info!=null ){
+            if(info.getSwiftCode().equals(swiftCode)){
+                json.put("cardCanUse",true);
+                json.put("errorMsg","可用");
+            }else{
+                json.put("cardCanUse",false);
+                json.put("errorMsg","卡号与所选银行不符");
+            }
+        }else{
+            json.put("cardCanUse",false);
+            json.put("errorMsg", "未找到卡信息");
+        }
+
+        result.setData(json);
+
+        return result;
+    }
+
+    /**
+     *
+     */
+    @RequestMapping(value = "/queryFee" , method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult queryFee(HttpServletRequest request){
+        JsonResult result = new JsonResult();
+        long amount;
+        int type;
+        try {
+             type =Integer.parseInt(request.getParameter("type"));
+             amount = Long.parseLong(request.getParameter("amount"));
+        }catch (Exception e){
+            result.setResult(ResultAck.para_error.getCode());
+            result.setRetinfo(ResultAck.para_error.getDesc());
+            return  result;
+        }
+
+        if( type < 1 || type >3){
+            result.setResult(ResultAck.para_error.getCode());
+            result.setRetinfo(ResultAck.para_error.getDesc());
+            return  result;
+        }
+
+        Users user = CheckLoginInterceptor.getUsers(request.getSession());
+
+
+        int settleType = 0;
+
+        if(type==1){
+            settleType = 2;
+        }else  if(type==2){
+            settleType = 8 ;
+        }else if(type==3){
+            settleType = 10;
+        }
+
+        long fee = settleRpcService.calculateHandlingFee(settleType,1,user.getUserCode(),amount);
+        JSONObject json = new JSONObject();
+        json.put("fee",fee);
+
+        result.setResult(ResultAck.succ);
+        result.setData(json);
+
+        return result;
+    }
+
 }

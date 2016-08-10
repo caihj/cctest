@@ -4,6 +4,8 @@ import com.berbon.jfaccount.commen.CheckLoginInterceptor;
 import com.berbon.jfaccount.commen.JsonResult;
 import com.berbon.jfaccount.facade.pojo.TransferCheckReq;
 import com.berbon.jfaccount.facade.pojo.TransferCheckRsp;
+import com.berbon.jfaccount.facade.pojo.TransferOrderCrtReq;
+import com.berbon.jfaccount.facade.pojo.TransferOrderCrtRsp;
 import com.berbon.user.pojo.Users;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -63,6 +65,27 @@ public class TransferController {
     public JsonResult createTransferOrder(HttpServletRequest request){
         JsonResult result = new JsonResult();
 
+        String userCode = request.getParameter("userCode");
+        String amount = request.getParameter("amount");
+        String note = request.getParameter("note");
+        String phone = request.getParameter("phone");
+        String type = request.getParameter("type");
+        String bindNo = request.getParameter("bindNo");
+        String realName = request.getParameter("realName");
+
+        TransferOrderCrtReq req = new TransferOrderCrtReq();
+
+        req.setUserCode(userCode);
+        req.setAmount(Long.parseLong(amount));
+        req.setNote(note);
+        req.setPhone(phone);
+        req.setType(Integer.parseInt(type));
+        req.setBindNo(bindNo);
+        req.setRealName(realName);
+
+        TransferOrderCrtRsp rsp = accountFacade.createTransferOrder(req);
+
+        result.setData(rsp);
 
         return result;
     }

@@ -75,8 +75,8 @@ public class ChargeController {
     public JsonResult bindQuickPay(HttpServletRequest request) {
 
 
-//        JsonResult  result =new JsonResult();
-//
+        JsonResult  result =new JsonResult();
+
 //
 //        String bindNo = request.getParameter("bindNo");
 //        Integer amount = Integer.parseInt(request.getParameter("amount"));
@@ -103,8 +103,6 @@ public class ChargeController {
 //        }else if(type==3) {
 //            attach = "网银支付";
 //        }
-//
-//
 //
 //
 //        ChargeReqData data =  new ChargeReqData();
@@ -196,7 +194,6 @@ public class ChargeController {
 //            charge.setBankId(bankId);
 //        }
 //
-//
 //        String sign = SignUtil.CalSign(charge,initBean.newPayKey);
 //
 //        charge.setSign(sign);
@@ -212,10 +209,8 @@ public class ChargeController {
 //            result.setResult(ResultAck.fail.getCode());
 //            result.setRetinfo("系统异常，请稍后再试");
 //        }
-//
-//
-//        return result;
-        return null;
+
+        return result;
     }
 
 

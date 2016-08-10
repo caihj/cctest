@@ -1,9 +1,11 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
+
 /**
  * Created by chj on 2016/8/9.
  */
-public class QuickPayMsgInfoReq {
+public class QuickPayMsgInfoReq implements Serializable {
     private String verifyCode;
     private String tradeOrderId;
     private String attach;

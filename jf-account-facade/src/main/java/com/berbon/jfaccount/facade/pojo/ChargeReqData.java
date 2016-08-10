@@ -4,10 +4,12 @@ package com.berbon.jfaccount.facade.pojo;
  * Created by chj on 2016/8/8.
  */
 
+import java.io.Serializable;
+
 /**
  * 充值请求，需要的数据
  */
-public class ChargeReqData {
+public class ChargeReqData implements Serializable {
 
     /**用户请求协议
      */

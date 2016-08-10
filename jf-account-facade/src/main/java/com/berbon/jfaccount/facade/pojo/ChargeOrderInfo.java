@@ -1,11 +1,12 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
 import java.util.Date;
 
 /**
  * Created by chj on 2016/8/5.
  */
-public class ChargeOrderInfo {
+public class ChargeOrderInfo implements Serializable {
 
     private long id;
     private String chargeBussOrderNo;   // '充值业务订单号',

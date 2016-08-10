@@ -1,11 +1,12 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * Created by chj on 2016/8/9.
  */
-public class QuickPayValRsp {
+public class QuickPayValRsp implements Serializable {
     //结果代码 (1, "待支付"), (2,"支付中"),(3, "成功"),(4,"失败"),(5,"异常");
     protected String resultCode;
     protected String resultMsg;

@@ -24,6 +24,11 @@ public class JsonResult {
         this.result = result;
     }
 
+    public void setResult(ResultAck result) {
+        this.result = result.getCode();
+        this.retinfo = result.getDesc();
+    }
+
     public Object getData() {
         return data;
     }
