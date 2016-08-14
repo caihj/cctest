@@ -18,7 +18,7 @@ public class Start {
         try {
             com.pay1pay.hsf.container.Main.main(args);
         } catch (Exception e) {
-            logger.error("berbon-managplatform-impl start error!", e);
+            logger.error("jf-account-impl start error!", e);
         }
     }
 }

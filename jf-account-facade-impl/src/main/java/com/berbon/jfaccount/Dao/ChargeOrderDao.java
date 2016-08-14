@@ -1,6 +1,8 @@
 package com.berbon.jfaccount.Dao;
 
 import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
+import com.pay1pay.hsf.common.logger.Logger;
+import com.pay1pay.hsf.common.logger.LoggerFactory;
 import com.sztx.util.mapper.BaseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -19,6 +21,8 @@ import java.sql.SQLException;
  */
 @Component
 public class ChargeOrderDao {
+
+    private static Logger logger = LoggerFactory.getLogger(ChargeOrderDao.class);
 
     @Autowired
     private JdbcTemplate masterTemplate;

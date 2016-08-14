@@ -63,7 +63,7 @@ fi
 JAVA_GC_OPTS=""
 JAVA_GC_OPTS="-Xloggc:./logs/gc.log -XX:+PrintGCDetails"
 echo -e "Starting the $SERVER_NAME ...\c"
-nohup java $JAVA_OPTS $JAVA_MEM_OPTS $JAVA_DEBUG_OPTS $JAVA_JMX_OPTS $JAVA_GC_OPTS -classpath $CONF_DIR:$LIB_JARS com.berbon.managplatform.start.Start &>/dev/null &
+nohup java $JAVA_OPTS $JAVA_MEM_OPTS $JAVA_DEBUG_OPTS $JAVA_JMX_OPTS $JAVA_GC_OPTS -classpath $CONF_DIR:$LIB_JARS com.berbon.jfaccount.Start &>/dev/null &
 
 COUNT=0
 while [ $COUNT -lt 1 ]; do    

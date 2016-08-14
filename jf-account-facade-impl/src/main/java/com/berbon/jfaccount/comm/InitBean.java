@@ -1,5 +1,6 @@
 package com.berbon.jfaccount.comm;
 
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -8,17 +9,37 @@ import org.springframework.stereotype.Component;
  */
 
 @Component
-public class InitBean {
+public class InitBean implements InitializingBean {
 
-    @Value("frontNotifyUrl")
+    @Value("${frontNotifyUrl}")
     public String frontUrl;
 
-    @Value("bakNotifyUrl")
-    public String bakNotifyUrl;
+    @Value("${bakNotifyUrl}")
+    public String backNotifyUrl;
 
-    @Value("newPayKey")
+    @Value("${newPayKey}")
     public String newPayKey;
 
+    @Value("${transferNotifyUrl}")
+    public String transferNotifyUrl;
+
+    @Value("${transferbackNotifyUrl}")
+    public String transferbackNotifyUrl;
+
+    @Value("${channelId}")
+    public String channelId="99";
+
+    /**
+     * 最长转账订单生存时间，单位秒
+     */
+    @Value("${maxChargeOrderAliveSec}")
+    private String __maxChargeOrderAliveSec;
+
+    public int maxChargeOrderAliveSec;
 
 
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        maxChargeOrderAliveSec = Integer.parseInt(__maxChargeOrderAliveSec);
+    }
 }

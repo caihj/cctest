@@ -7,10 +7,14 @@ import java.io.Serializable;
  */
 public class TransferOrderCrtReq implements Serializable {
 
+
+    private String fromUserCode;
+
+
     /**用户倍棒号
      *
      */
-    private String userCode;
+    private String toUserCode;
 
     /**
      * 金额，单位分
@@ -38,12 +42,18 @@ public class TransferOrderCrtReq implements Serializable {
      */
     private String realName;
 
-    public String getUserCode() {
-        return userCode;
+    private String reference;
+
+
+    private String paypwd;
+
+
+    public String getToUserCode() {
+        return toUserCode;
     }
 
-    public void setUserCode(String userCode) {
-        this.userCode = userCode;
+    public void setToUserCode(String toUserCode) {
+        this.toUserCode = toUserCode;
     }
 
     public long getAmount() {
@@ -92,5 +102,21 @@ public class TransferOrderCrtReq implements Serializable {
 
     public void setRealName(String realName) {
         this.realName = realName;
+    }
+
+    public String getFromUserCode() {
+        return fromUserCode;
+    }
+
+    public void setFromUserCode(String fromUserCode) {
+        this.fromUserCode = fromUserCode;
+    }
+
+    public String getPaypwd() {
+        return paypwd;
+    }
+
+    public void setPaypwd(String paypwd) {
+        this.paypwd = paypwd;
     }
 }

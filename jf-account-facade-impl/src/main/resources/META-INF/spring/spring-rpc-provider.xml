@@ -7,11 +7,7 @@
 	     http://code.alibabatech.com/schema/dubbo
 	     http://code.alibabatech.com/schema/dubbo/dubbo.xsd">
     
-    <bean  class="com.sztx.se.rpc.dubbo.provider.DubboService">
-    	<property name="interfaceName" value="com.berbon.jfaccount.facade.AccountFacade" />
-    	<property name="interfaceRef" ref="accountFacadeImpl" />
-    	<property name="protocols" value="${dubbo.protocols}" />
-    </bean>
+
 
 	<bean id="dynamicDubboProvider" class="com.sztx.se.rpc.dubbo.source.DynamicDubboProvider">
 		<property name="openLog" value="true" />
@@ -19,6 +15,19 @@
 	
 	<bean id="dynamicCreateDubboProviderManager" class="com.sztx.se.rpc.dubbo.source.DynamicCreateDubboProviderManager">
 		<property name="dynamicDubboProvider" ref="dynamicDubboProvider" />
+	</bean>
+
+	<bean  class="com.sztx.se.rpc.dubbo.provider.DubboService">
+		<property name="interfaceName" value="com.berbon.jfaccount.facade.AccountFacade" />
+		<property name="interfaceRef" ref="accountFacadeImpl" />
+		<property name="protocols" value="${dubbo.protocols}" />
+	</bean>
+
+
+	<bean  class="com.sztx.se.rpc.dubbo.provider.DubboService">
+		<property name="interfaceName" value="com.berbon.jfaccount.facade.AccountMobileFacade" />
+		<property name="interfaceRef" ref="accountMobileFacadeIMpl" />
+		<property name="protocols" value="${dubbo.protocols}" />
 	</bean>
 	  
 </beans>

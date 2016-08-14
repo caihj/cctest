@@ -8,7 +8,7 @@ import java.util.Date;
  */
 public class TransferOrderInfo implements Serializable {
 
-    protected   int	amount;
+    protected long amount;
     protected   Date createTime;
     protected   Date	expireTime;
     protected   long id;
@@ -33,12 +33,13 @@ public class TransferOrderInfo implements Serializable {
     protected   String	orderId;
     protected   String	tradeOrderId;
     protected   String  realName;
+    protected  String phone;
 
-    public int getAmount() {
+    public long getAmount() {
         return amount;
     }
 
-    public void setAmount(int amount) {
+    public void setAmount(long amount) {
         this.amount = amount;
     }
 
@@ -233,5 +234,13 @@ public class TransferOrderInfo implements Serializable {
 
     public void setRealName(String realName) {
         this.realName = realName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 };

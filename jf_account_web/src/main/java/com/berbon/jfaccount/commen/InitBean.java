@@ -17,4 +17,5 @@ public class InitBean {
 
     @Value("newPayKey")
     public String newPayKey;
+
 }

@@ -2,14 +2,19 @@ package com.berbon.jfaccount.impl;
 
 import com.berbon.jfaccount.Dao.ChargeOrderDao;
 import com.berbon.jfaccount.Dao.TransferOrderDao;
+import com.berbon.jfaccount.Service.SignService;
+import com.berbon.jfaccount.comm.ErrorCode;
 import com.berbon.jfaccount.comm.InitBean;
 import com.berbon.jfaccount.facade.AccountFacade;
+import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.*;
-import com.berbon.jfaccount.util.SignUtil;
 import com.berbon.jfaccount.util.UtilTool;
+import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
+import com.sztx.pay.center.rpc.api.domain.ChargeRequest;
 import com.sztx.pay.center.rpc.api.domain.TradeResponse;
+import com.sztx.pay.center.rpc.api.domain.TransferRequest;
 import com.sztx.pay.center.rpc.api.domain.VerifyQuickPayRequest;
 import com.sztx.pay.center.rpc.api.service.TradeRpcService;
 import com.sztx.se.rpc.dubbo.source.DynamicDubboClient;
@@ -19,21 +24,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
  * Created by chj on 2016/8/5.
  */
 
-@Service
+@Service("accountFacadeImpl")
 public class AccountFacadeImpl implements AccountFacade {
+
 
 
     private static Logger logger = LoggerFactory.getLogger(AccountFacadeImpl.class);
 
     @Autowired
     private ChargeOrderDao dao;
-
+    @Autowired
     private TransferOrderDao transferOrderDao;
 
     @Autowired
@@ -42,8 +49,11 @@ public class AccountFacadeImpl implements AccountFacade {
     @Autowired
     private InitBean initBean;
 
+    @Autowired
+    private SignService signService;
+
     @Override
-    public ChargeOrderInfo createChargeQuckPay(ChargeReqData data) {
+    public ChargeOrderInfo createChargeQuckPay(CreateChargeReq data) {
 
         String orderId = UtilTool.createOrderId(UtilTool.ChargeOrderPrefix);
 
@@ -102,12 +112,12 @@ public class AccountFacadeImpl implements AccountFacade {
         //no reference
         request.setSrcChannel(data.getSrcChannel());
         request.setReturnUrl(initBean.frontUrl);
-        request.setNotifyUrl(initBean.bakNotifyUrl);
+        request.setNotifyUrl(initBean.backNotifyUrl);
         request.setOrderTime(orderTime);
         request.setExpireTime(expireTime);
         request.setSignType("MD5");
 
-        String sign = SignUtil.CalSign(request,initBean.newPayKey);
+        String sign = SignService.CalSign(request, initBean.newPayKey);
 
         request.setSign(sign);
 
@@ -141,11 +151,17 @@ public class AccountFacadeImpl implements AccountFacade {
             return rsp;
         }
 
-        QueryUserInfoService  queryUserInfoService = dubboClient.getDubboClient("QueryUserInfoService");
+        QueryUserInfoService  queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
         if(queryUserInfoService ==null){
             logger.error("系统错误,获取TradeRpcService 失败");
             rsp.setCanTransfer(false);
             rsp.setMsg("系统错误，请稍后再试");
+            return rsp;
+        }
+
+        if(data.getFromUserCode().equals(data.getToUserCode())){
+            rsp.setCanTransfer(false);
+            rsp.setMsg("不能转账到自己账户");
             return rsp;
         }
 
@@ -163,6 +179,8 @@ public class AccountFacadeImpl implements AccountFacade {
             return rsp;
         }
 
+
+
         if(toUser.getRealname()!=null){
             if(toUser.getRealname().equals(data.getRealName())==false){
                 rsp.setCanTransfer(false);
@@ -172,10 +190,147 @@ public class AccountFacadeImpl implements AccountFacade {
         }
 
         //检查限额
-
-
+        rsp.setCanTransfer(true);
+        rsp.setMsg("OK");
 
         return rsp;
+    }
+
+    @Override
+    public CreateChargeRsp createChargeOrder(CreateChargeReq req) {
+
+        QueryUserInfoService queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
+        TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
+
+        CreateChargeRsp rsp = new CreateChargeRsp();
+
+        String attach="";
+        if(req.getType()==1){
+            attach = "已有卡支付";
+        }else if(req.getType()==2){
+            attach = "绑卡并支付";
+        }else if(req.getType()==3) {
+            attach = "网银支付";
+        }
+
+        req.setAttach(attach);
+
+        if(req.getType()==1 || req.getType()==2){
+
+            boolean passwd = signService.checkUserPayPasswd(req.getUserCode(),req.getPayPwd());
+
+            if(passwd==false){
+                logger.error("支付密码错误");
+                rsp.setResultCode(ErrorCode.paypwd_error.code);
+                rsp.setResultMsg(ErrorCode.paypwd_error.desc);
+                return rsp;
+            }
+        }
+
+        ChargeOrderInfo orderInfo = createChargeQuckPay(req);
+        if(orderInfo==null){
+            rsp.setResultCode(ErrorCode.sys_error.code);
+            rsp.setResultMsg(ErrorCode.sys_error.desc);
+            return rsp;
+        }
+
+        ChargeRequest charge = new ChargeRequest();
+
+        UserVO uservo = queryUserInfoService.getUserInfo(req.getUserCode());
+
+        charge.setPayerUserId(req.getUserCode());
+        charge.setAmount(req.getAmount());
+        charge.setOrderId(orderInfo.getChargeBussOrderNo());
+        charge.setReturnUrl(initBean.frontUrl);
+        charge.setNotifyUrl(initBean.backNotifyUrl);
+        charge.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreateTime()));
+        charge.setSignType("MD5");
+
+        charge.setAttach(attach);
+
+        if(req.getType()==1){
+            //已有卡支付
+            charge.setSrcChannel("1");
+            charge.setBindCardFlag(false);
+            charge.setBindNo(req.getBindNo());
+        }else  if(req.getType()==2 ) {
+            //绑卡并支付
+            charge.setBindCardFlag(true);
+            if((req.getCardType()!=1 && req.getCardType()!=2)){
+                rsp.setResultCode(ErrorCode.para_error.code);
+                rsp.setResultMsg(ErrorCode.para_error.desc);
+                return rsp;
+            }
+
+            if(req.getCardType()==2){
+                if (StringUtil.isNotNull(req.getCvv(), req.getExpireDate())){
+                    rsp.setResultCode(ErrorCode.para_error.code);
+                    rsp.setResultMsg(ErrorCode.para_error.desc);
+                    return rsp;
+                }
+            }
+
+            if (uservo.getIsAuth() == 1) {
+                //已实名
+                charge.setRealName(uservo.getRealname());
+                charge.setIdentityNo(uservo.getIdentityid());
+            } else {
+                //未实名
+                if (StringUtil.isNotNull(req.getRealName(), req.getIdentityNo(), req.getMobileNo())) {
+                    rsp.setResultCode(ErrorCode.para_error.code);
+                    rsp.setResultMsg(ErrorCode.para_error.desc);
+                    return rsp;
+                }
+                charge.setRealName(req.getRealName());
+                charge.setIdentityNo(req.getIdentityNo());
+            }
+
+
+            charge.setBindType(1);
+            charge.setCardActType(1);
+            charge.setCardType(req.getCardType());
+            charge.setCardNo(req.getCardNo());
+            charge.setMobileNo(req.getMobileNo());
+            charge.setBankId(req.getBankId());
+
+            if(req.getCardType()==2){
+                //信用卡，设置cvv
+                charge.setCvv(req.getCvv());
+                charge.setExpireDate(req.getExpireDate());
+            }
+
+        }else if(req.getType()==3){
+            if(StringUtil.isNull(req.getBankId())){
+                rsp.setResultCode(ErrorCode.para_error.code);
+                rsp.setResultMsg(ErrorCode.para_error.desc);
+                return rsp;
+            }
+
+            charge.setBankId(req.getBankId());
+        }
+
+        String sign = SignService.CalSign(charge, initBean.newPayKey);
+
+        charge.setSign(sign);
+
+
+        try {
+            TradeResponse response = tradeRpcService.charge(charge);
+            rsp.setResultCode(response.getResultCode());
+            rsp.setResultCode(response.getResultMsg());
+            rsp.setOrderId(orderInfo.getChargeBussOrderNo());
+            rsp.setTradeOrderId(orderInfo.getTradeOrderId());
+            //rsp.setPayValue();
+            rsp.setAttach(orderInfo.getAttach());
+            rsp.setPayUrl(response.getPayUrl());
+            rsp.setPayParams(response.getPayParams());
+        }catch (Exception e){
+            logger.error("支付rpc异常" + e);
+            e.printStackTrace();
+            rsp.setResultCode(ErrorCode.sys_error.code);
+            rsp.setResultMsg(ErrorCode.sys_error.desc);
+        }
+        return  rsp;
     }
 
 
@@ -189,15 +344,121 @@ public class AccountFacadeImpl implements AccountFacade {
 
         TransferOrderCrtRsp rsp = new TransferOrderCrtRsp();
 
+        TransferCheckReq checkReq = new TransferCheckReq();
+        checkReq.setFromUserCode(req.getFromUserCode());
+        checkReq.setToUserCode(req.getToUserCode());
+        checkReq.setRealName(req.getRealName());
+        checkReq.setAmount(req.getAmount());
+        checkReq.setPhone(req.getPhone());
+
+        TransferCheckRsp checkRsp  = checkCanTransferTo(checkReq);
+        if(checkRsp.isCanTransfer()==false){
+            rsp.setMsg("检验失败" + checkRsp.getMsg());
+            return rsp;
+        }
+
+        TransferOrderInfo orderInfo = new TransferOrderInfo();
+
+        orderInfo.setOrderId(UtilTool.createOrderId("ZZ"));
+        orderInfo.setFromUserCode(req.getFromUserCode());
+        orderInfo.setToUserCode(req.getToUserCode());
+        orderInfo.setAmount(req.getAmount());
+
+        orderInfo.setReceiverType(1);
+
+        orderInfo.setAttach(req.getNote());
+        orderInfo.setRealName(req.getRealName());
+        orderInfo.setPhone(req.getPhone());
+        orderInfo.setCreateTime(new Date());
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(orderInfo.getCreateTime());
+        cal.add(Calendar.SECOND, initBean.maxChargeOrderAliveSec);
+        orderInfo.setExpireTime(cal.getTime());
+
+        orderInfo.setChannelId(initBean.channelId);
+
+        orderInfo = transferOrderDao.createOrder(orderInfo);
+
+        rsp.setOrderInfo(orderInfo);
+
+        return rsp;
+    }
+
+    @Override
+    public PageResult<TransferOrderInfo> queryTransferOrder(int pageNo, int pageSize, Date startTime, Date endTime, String orderId) {
+        return transferOrderDao.queryTransferOrder(pageNo,pageSize,startTime,endTime,orderId);
+    }
+
+    @Override
+    public TransferOrderInfo queryTransferDetail(String orderId) {
+       return transferOrderDao.getByOrderId(orderId);
+    }
+
+    /**
+     * 支付转账订单
+     * @param pay
+     * @return
+     */
+
+    @Override
+    public TransferOrderPayResp payTransferOrder(TransferOrderPayReq pay) {
+
+        TransferOrderPayResp rsp = new TransferOrderPayResp();
+
+        TransferOrderInfo orderInfo = transferOrderDao.getByOrderId(pay.getOrderId());
+        if(orderInfo==null){
+            logger.error("未找到充值订单");
+            return null;
+        }
+
+        boolean passwd = signService.checkUserPayPasswd(orderInfo.getFromUserCode(),pay.getPaypwd());
+
+        if(passwd==false){
+            logger.error("支付密码错误");
+            rsp.setResultCode(ErrorCode.paypwd_error.code);
+            rsp.setResultMsg(ErrorCode.paypwd_error.desc);
+            return rsp;
+        }
+
+        TransferRequest request = new TransferRequest();
+        request.setOrderId(orderInfo.getOrderId());
+        request.setPayerUserId(orderInfo.getFromUserCode());
+        request.setPayeeUserId(orderInfo.getToUserCode());
+        request.setPayType(pay.getType());
+        request.setReceiverType(orderInfo.getReceiverType());
+        request.setAmount(orderInfo.getAmount() + "");
+        request.setBindNo(orderInfo.getBindNo());
+        request.setAttach(orderInfo.getAttach());
+        request.setSrcChannel("1");
+        request.setReturnUrl(initBean.transferNotifyUrl);
+        request.setNotifyUrl(initBean.transferbackNotifyUrl);
+        request.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getCreateTime()));
+        request.setExpireTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getExpireTime()));
+        request.setIsUsePwd(orderInfo.getIsUsePwd() + "");
+        request.setChannelId(orderInfo.getChannelId());
+        request.setBusinessType("1114");
+        request.setSignType("MD5");
+
+        String sign = SignService.CalSign(request, initBean.newPayKey);
+        request.setSign(sign);
+
         TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
+        if(tradeRpcService == null){
+            logger.error("获取TradeRpcService 失败!");
+            rsp.setResultCode(ErrorCode.sys_error.code);
+            rsp.setResultMsg(ErrorCode.sys_error.desc);
+            return rsp;
+        }
 
+        TradeResponse resp =  tradeRpcService.transfer(request);
 
-
-
-
-
-
-
+        rsp.setTradeOrderId(resp.getTradeOrderId());
+        rsp.setOrderId(orderInfo.getOrderId());
+        rsp.setResultCode(resp.getResultCode());
+        rsp.setResultMsg(resp.getResultMsg());
+        rsp.setAttach(orderInfo.getAttach());
+        rsp.setPayUrl(resp.getPayUrl());
+        rsp.setPayParams(resp.getPayParams());
 
         return rsp;
     }

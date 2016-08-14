@@ -208,7 +208,7 @@
 		<dependency>
 			<groupId>com.sztx.pay.center</groupId>
 			<artifactId>pay-center-rpc-api</artifactId>
-			<version>2.3.1-SNAPSHOT</version>
+			<version>3.1.0-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
@@ -258,10 +258,13 @@
 					</excludes>
 				</configuration>
 			</plugin>
-			<!-- <plugin> <groupId>com.upload.plugin</groupId> <artifactId>upload-maven-plugin</artifactId> 
-				<version>1.0.0-SNAPSHOT</version> <configuration> <servers> <server> <host>10.2.50.32</host> 
-				<username>apps</username> <password>apps88877007</password> <location>/data/apps/berbon-jfaccount-web</location>
-				<port>22</port> </server> </servers> </configuration> </plugin> -->
+			<plugin>
+				<artifactId>maven-deploy-plugin</artifactId>
+				<configuration>
+					<skip>true</skip>
+				</configuration>
+			</plugin>
+
 		</plugins>
 	</build>
 </project>

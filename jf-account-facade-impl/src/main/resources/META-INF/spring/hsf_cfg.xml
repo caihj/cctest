@@ -14,8 +14,7 @@
 	<hsf:protocol name="hsf" heartbeat="5000" />
 	<hsf:consumer retries="0" timeout="10000" check="false"
 		loadbalance="roundrobin"></hsf:consumer>
-	<!-- 为hsf框架配置回调入口，映射facade -->
-	<hsf:service interface="com.berbon.jfaccount.facade.AccountFacade" ref="accountFacadeImpl" />
+
 
 
 </beans>

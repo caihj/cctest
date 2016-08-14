@@ -1,14 +1,19 @@
 package com.berbon.jfaccount.controller;
 
 import com.berbon.jfaccount.commen.CheckLoginInterceptor;
+import com.berbon.jfaccount.commen.ConstStr;
 import com.berbon.jfaccount.commen.JsonResult;
-import com.berbon.jfaccount.facade.pojo.TransferCheckReq;
-import com.berbon.jfaccount.facade.pojo.TransferCheckRsp;
-import com.berbon.jfaccount.facade.pojo.TransferOrderCrtReq;
-import com.berbon.jfaccount.facade.pojo.TransferOrderCrtRsp;
+import com.berbon.jfaccount.commen.ResultAck;
+import com.berbon.jfaccount.facade.pojo.*;
 import com.berbon.user.pojo.Users;
+import com.berbon.util.String.StringUtil;
+import com.pay1pay.hsf.common.logger.Logger;
+import com.pay1pay.hsf.common.logger.LoggerFactory;
+import com.sztx.pay.center.rpc.api.service.AccountRpcService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -24,8 +29,21 @@ import javax.servlet.http.HttpServletRequest;
 public class TransferController {
 
 
-    @Autowired
+    private static Logger logger = LoggerFactory.getLogger(TransferController.class);
+
     private com.berbon.jfaccount.facade.AccountFacade accountFacade;
+
+    @Autowired
+    private com.sztx.se.rpc.dubbo.source.DynamicDubboClient dubboClient;
+
+    private AccountRpcService accountRpcService;
+
+    @ModelAttribute
+    public  void init() {
+        accountFacade = dubboClient.getDubboClient("accountFacade");
+        accountRpcService = dubboClient.getDubboClient("accountRpcService");
+    }
+
 
     @RequestMapping(value = "/checkUser" , method ={ RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
@@ -54,41 +72,125 @@ public class TransferController {
         TransferCheckRsp rsp = accountFacade.checkCanTransferTo(req);
 
         result.setData(rsp);
+        result.setResult(ResultAck.succ);
 
         return result;
     }
 
+    /**
+     * 创建转账订单
+     * @return
+     */
+    @RequestMapping(value = "/transfer" , method = RequestMethod.GET)
+    public String CreateTransferOrder(HttpServletRequest request,ModelMap map) {
 
-
-    @RequestMapping(value = "/createOrder" , method ={ RequestMethod.POST, RequestMethod.GET})
-    @ResponseBody
-    public JsonResult createTransferOrder(HttpServletRequest request){
-        JsonResult result = new JsonResult();
+        logger.info("recv  request /account/transferInit");
 
         String userCode = request.getParameter("userCode");
         String amount = request.getParameter("amount");
         String note = request.getParameter("note");
         String phone = request.getParameter("phone");
+        String realName = request.getParameter("realName");
+        String orderId = request.getParameter("orderId");
+
+        TransferOrderInfo order;
+
+        Users user = CheckLoginInterceptor.getUsers(request.getSession());
+        if (user == null) {
+            logger.error("系统错误");
+            return null;
+        }
+
+        if(orderId==null || orderId.trim().isEmpty()==true) {
+
+            TransferOrderCrtReq req = new TransferOrderCrtReq();
+
+            req.setFromUserCode(user.getUserCode());
+            req.setToUserCode(userCode);
+            req.setAmount(Long.parseLong(amount));
+            req.setNote(note);
+            req.setPhone(phone);
+            req.setRealName(realName);
+
+            TransferOrderCrtRsp rsp = accountFacade.createTransferOrder(req);
+            if (rsp == null || rsp.getOrderInfo() == null) {
+                logger.error("创建订单失败");
+                return ConstStr.error_page;
+            }
+            order = rsp.getOrderInfo();
+        }else if(orderId!=null && orderId.trim().isEmpty()==false){
+            order = accountFacade.queryTransferDetail(orderId);
+        }else{
+            logger.error("参数错误");
+            return ConstStr.error_page;
+        }
+
+        int balance = accountRpcService.queryBalance(user.getUserCode(), 1);
+
+        map.put("tradeNo",order.getOrderId());
+        map.put("payee",order.getRealName());
+        map.put("remark",order.getAttach());
+        map.put("totalFee",order.getAmount()/100.0);
+        map.put("balance",balance/100.0);
+
+        String hasMoney="0";
+
+        if(balance >= order.getAmount()){
+            hasMoney="1";
+        }
+
+        map.put("hasMoney",hasMoney);
+
+        return "/account/transfer";
+    }
+
+
+    /**
+     * 支付转账订单
+     * @return
+     */
+    @RequestMapping(value = "payTransfer")
+    public JsonResult payTransfer(HttpServletRequest request){
+
+        JsonResult result = new JsonResult();
+
+        String orderId = request.getParameter("orderId");
         String type = request.getParameter("type");
         String bindNo = request.getParameter("bindNo");
-        String realName = request.getParameter("realName");
+        String paypwd = request.getParameter("paypwd");
 
-        TransferOrderCrtReq req = new TransferOrderCrtReq();
 
-        req.setUserCode(userCode);
-        req.setAmount(Long.parseLong(amount));
-        req.setNote(note);
-        req.setPhone(phone);
+        if(StringUtil.isNull(orderId,type,paypwd)){
+            result.setResult(ResultAck.para_error);
+            return result;
+        }
+
+        if(!type.equals("1") && !type.equals("2")){
+            result.setResult(ResultAck.para_error);
+            return result;
+        }
+
+        if(type.equals("2") && (bindNo==null || bindNo.trim().isEmpty())){
+            result.setResult(ResultAck.para_error);
+            return result;
+        }
+
+
+        TransferOrderPayReq req =  new TransferOrderPayReq();
+
+        req.setOrderId(orderId);
         req.setType(Integer.parseInt(type));
         req.setBindNo(bindNo);
-        req.setRealName(realName);
+        req.setPaypwd(paypwd);
 
-        TransferOrderCrtRsp rsp = accountFacade.createTransferOrder(req);
+        TransferOrderPayResp resp = accountFacade.payTransferOrder(req);
 
-        result.setData(rsp);
+        result.setResult(ResultAck.succ);
+        result.setData(resp);
 
-        return result;
+        return  result;
     }
+
 
 
 }

@@ -24,5 +24,6 @@
 		<property name="dynamicDubboClient" ref="dynamicDubboClient" />
 	</bean>
 	
-	<import resource="spring-rpc-consumer.xml" /> 
+	<import resource="spring-rpc-consumer.xml" />
+	<import resource="spring-rpc-account-consumer.xml"/>
 </beans>

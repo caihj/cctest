@@ -1,6 +1,9 @@
 package com.berbon.jfaccount.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.berbon.jfaccount.facade.AccountFacade;
+import com.berbon.jfaccount.facade.common.PageResult;
+import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.jfaccount.pojo.BankInfoDetail;
 import com.berbon.jfaccount.commen.CheckLoginInterceptor;
 import com.berbon.jfaccount.commen.JsonResult;
@@ -65,8 +68,7 @@ public class AccountController {
 
     private SettleRpcService settleRpcService;
 
-    @Autowired
-    private com.berbon.jfaccount.facade.AccountFacade accountFacade;
+    private AccountFacade accountFacade;
 
     @ModelAttribute
     public  void init(){
@@ -78,6 +80,7 @@ public class AccountController {
         bankRpcService = dubboClient.getDubboClient("bankRpcService");
         bankPayLimitRpcService = dubboClient.getDubboClient("bankPayLimitRpcService");
         settleRpcService = dubboClient.getDubboClient("settleRpcService");
+        accountFacade = dubboClient.getDubboClient("accountFacade");
     }
 
     /**
@@ -152,6 +155,8 @@ public class AccountController {
 
         int balance = accountRpcService.queryBalance(user.getUserCode(), 1);
 
+        String bindNo = request.getParameter("bindNo");
+
         UserVO userVO = queryUserInfoService.getUserInfo(user.getUserCode());
         map.put("balance",balance);
         map.put("realName",userVO.getRealname());
@@ -161,6 +166,8 @@ public class AccountController {
         String makeIdNo =  userVO.getIdentityid().substring(0, 4)+"***********"+userVO.getIdentityid().substring(userVO.getIdentityid().length() - 3, userVO.getIdentityid().length());
 
         map.put("identityNo", makeIdNo);
+
+        map.put("bindNo", bindNo);
 
         return "account/recharge";
     }
@@ -175,6 +182,7 @@ public class AccountController {
         logger.info("recv  request /account/transferInit");
         return "/account/transferInit";
     }
+
 
     /**
      * testJson
@@ -252,6 +260,9 @@ public class AccountController {
             String startDate = request.getParameter("startTime");
             String endDate = request.getParameter("endTime");
             String transferOrderId =request.getParameter("transferOrderId");
+
+            int IpageNo = Integer.parseInt(pageNo);
+            int IpageSize  = Integer.parseInt(pageSize);
             Date startD = null;
             Date endD = null;
 
@@ -263,59 +274,48 @@ public class AccountController {
                 endD = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endDate+" 23:59:59");
             }
 
-
-            QueryOrderRequest queryReq = new QueryOrderRequest();
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
-            queryReq.setPayerAccountId(user.getUserCode());
-            if(startD!=null)
-                queryReq.setStartTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startD));
-            if(endD!=null)
-                queryReq.setEndTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(endD));
 
             if(transferOrderId!=null && transferOrderId.trim().isEmpty()==false){
-                queryReq.setTradeOrderId(transferOrderId);
-                queryReq.setStartTime(null);
-                queryReq.setEndTime(null);
+                startD = null;
+                endD = null;
             }
 
-            OrderTransferList records = queryService.findTransfer(queryReq, Integer.parseInt(pageNo), Integer.parseInt(pageSize));
+            PageResult<TransferOrderInfo> records = accountFacade.queryTransferOrder(IpageNo,IpageSize,startD,endD,transferOrderId);
 
             JSONObject json = new JSONObject();
-            /**
-             pageNo:1,
-             pageSize:10,
-             total:100,
-             rows
-             */
+
             json.put("pageNo",pageNo);
             json.put("pageSize",pageSize);
-            json.put("total",records.getTotal());
+            json.put("total",records.total);
 
             List<TransferData> f_records = new ArrayList<>();
-            for(OrderTransfer t:records.getRows()){
-                TransferData transferData = new TransferData();
-                transferData.setAddTime(t.getAddTime());
-                transferData.setTransferOrderId(t.getTransferOrderId());
-                transferData.setTransferTypeStr(t.getTransferTypeStr());
+            if(records.listData!=null){
+                for(TransferOrderInfo t:records.listData){
+                    TransferData transferData = new TransferData();
+                    transferData.setAddTime(t.getCreateTime());
+                    transferData.setTransferOrderId(t.getOrderId());
+                    //transferData.setTransferTypeStr(t.gett);
 
-                String otherAccount;
-                String intOrOut;
+                    String otherAccount;
+                    String intOrOut;
 
-                if(t.getPayeeUserId().equals(user.getUserCode())){
-                    otherAccount = t.getPayerUserId();
-                    intOrOut = "in";
-                }else {
-                    otherAccount = t.getPayeeUserId();
-                    intOrOut = "out";
+                    if(t.getToUserCode().equals(user.getUserCode())){
+                        otherAccount = t.getFromUserCode();
+                        intOrOut = "in";
+                    }else {
+                        otherAccount = t.getToUserCode();
+                        intOrOut = "out";
+                    }
+
+                    transferData.setOtherAccount(otherAccount);
+                    transferData.setType(intOrOut);
+                    transferData.setRemark(t.getAttach());
+                    transferData.setTransferAmount(t.getAmount()/100.0+"");
+                    transferData.setTransferStatusStr(t.getOrderStateDesc());
+
+                    f_records.add(transferData);
                 }
-
-                transferData.setOtherAccount(otherAccount);
-                transferData.setType(intOrOut);
-                transferData.setRemark(t.getRemark());
-                transferData.setTransferAmount((String) t.getTransferAmount());
-                transferData.setTransferStatusStr(t.getTransferStatusStr());
-
-                f_records.add(transferData);
             }
 
             json.put("rows",f_records);
@@ -390,7 +390,7 @@ public class AccountController {
                 record.setAddTime(t.getAddTime());
                 record.setRechargeOrderId(t.getRechargeOrderId());
                 record.setRechargeChannelStr(t.getRechargeChannelStr());
-                record.setRechargeAmount((String) t.getRechargeAmount());
+                record.setRechargeAmount(t.getRechargeAmount().longValue()/100.0+"");
                 record.setRechargeStatusStr(t.getRechargeStatusStr());
 
                 f_records.add(record);
@@ -691,7 +691,7 @@ public class AccountController {
             settleType = 10;
         }
 
-        long fee = settleRpcService.calculateHandlingFee(settleType,1,user.getUserCode(),amount);
+        long fee = settleRpcService.calculateHandlingFee(1,settleType,user.getUserCode(),amount);
         JSONObject json = new JSONObject();
         json.put("fee",fee);
 
