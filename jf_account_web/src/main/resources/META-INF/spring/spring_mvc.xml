@@ -84,23 +84,18 @@
 		<property name="toolboxConfigLocation" value="/WEB-INF/velocity/velocity_toolbox.xml" />
 	</bean>
 	 <!--配置拦截URL请求-->
- 	 <!--<mvc:interceptors>-->
-		<!--<mvc:interceptor>-->
-			<!--&lt;!&ndash; 默认所有的请求都进行拦截 &ndash;&gt;-->
-			<!--<mvc:mapping path="/report/*"/>-->
-			<!--<mvc:mapping path="/fuelcard/*" />-->
-			<!--<mvc:mapping path="/mobiledata/*" />-->
-			<!--<mvc:mapping path="/broadband/*" />-->
-			<!--<mvc:mapping path="/007bao/*" />-->
-		    <!--<mvc:mapping path="/mobilebatch/*"/>-->
-		    <!--<mvc:mapping path="/etcinfo/*"/>-->
-		     <!--<mvc:mapping path="/sztcard/*"/>-->
-			<!--&lt;!&ndash; 特殊请求不进行都进行拦截 &ndash;&gt;-->
-			<!--<mvc:exclude-mapping path="/fuelcard/login.htm"/>-->
-			<!--<mvc:exclude-mapping path="/account/*"/>-->
-			<!--<bean class="com.berbon.jfaccountcommen.CheckLoginInterceptor" />-->
-		<!--</mvc:interceptor>-->
-	<!--</mvc:interceptors>-->
+ 	 <mvc:interceptors>
+		<mvc:interceptor>
+			<!-- 默认所有的请求都进行拦截 -->
+			<mvc:mapping path="/account/*"/>
+			<mvc:mapping path="/charge/*" />
+			<mvc:mapping path="/bindcard/*" />
+			<mvc:mapping path="/orderQuery/*"/>
+			<mvc:mapping path="/transfer/*"/>
+			<!-- 特殊请求不进行都进行拦截 -->
+			<bean class="com.berbon.jfaccount.commen.CheckLoginInterceptor" />
+		</mvc:interceptor>
+	</mvc:interceptors>
 	<!-- json解析处理相关依赖 -->
 	<bean id="jsonXssObjectMapper"
 		class="com.pay1pay.framework.web.security.JsonEscapeObjectMapper" />

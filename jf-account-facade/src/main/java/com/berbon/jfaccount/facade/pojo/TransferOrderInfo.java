@@ -34,6 +34,7 @@ public class TransferOrderInfo implements Serializable {
     protected   String	tradeOrderId;
     protected   String  realName;
     protected  String phone;
+    protected  String fromMob;
 
     public long getAmount() {
         return amount;
@@ -242,5 +243,13 @@ public class TransferOrderInfo implements Serializable {
 
     public void setPhone(String phone) {
         this.phone = phone;
+    }
+
+    public String getFromMob() {
+        return fromMob;
+    }
+
+    public void setFromMob(String fromMob) {
+        this.fromMob = fromMob;
     }
 };

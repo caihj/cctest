@@ -35,6 +35,13 @@ public class InitBean implements InitializingBean {
     @Value("${maxChargeOrderAliveSec}")
     private String __maxChargeOrderAliveSec;
 
+
+    @Value("${chargeBusinessType}")
+    public String chargeBusinessType;
+
+    @Value("${tranferBusinessType}")
+    public String tranferBusinessType;
+
     public int maxChargeOrderAliveSec;
 
 

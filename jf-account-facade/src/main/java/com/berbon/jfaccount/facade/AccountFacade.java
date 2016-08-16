@@ -67,4 +67,27 @@ public interface AccountFacade {
      */
     TransferOrderPayResp payTransferOrder(TransferOrderPayReq pay);
 
+    /**
+     * 解绑银行卡
+     */
+    UnBindBankCardRsp unBindBankCard(String userCode,String bindNo,String paypwd);
+
+    /**
+     * 绑定银行卡
+     */
+    BindNewCardRsp bindNewBankCard(BindNewCardReq req);
+
+
+    /**
+     *确认短信验证码
+     */
+    ConfirmBindMsgRsp confirmBindMsg(ConfirmBindMsgReq req);
+
+    /**
+     * 重新发送绑卡短信
+     * @return  true 成功
+     *  false 系统异常
+     */
+    boolean reSendBindMsg(String userCode,String bindNo);
+
 }

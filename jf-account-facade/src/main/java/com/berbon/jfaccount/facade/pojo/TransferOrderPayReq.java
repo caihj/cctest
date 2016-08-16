@@ -1,9 +1,11 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
+
 /**
  * Created by chj on 2016/8/12.
  */
-public class TransferOrderPayReq {
+public class TransferOrderPayReq  implements Serializable{
 
     private String orderId;
     private int type;

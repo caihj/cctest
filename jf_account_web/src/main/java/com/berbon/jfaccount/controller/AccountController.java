@@ -87,7 +87,7 @@ public class AccountController {
      * session test
      * @return
      */
-    @RequestMapping(value = "/sessionTest" , method ={ RequestMethod.POST, RequestMethod.GET})
+    @RequestMapping(value = "/sessionTest" , method ={ RequestMethod.POST, RequestMethod.GET},produces="application/json;charset=UTF-8")
     @ResponseBody
     public JsonResult sessionTest(HttpServletRequest request){
         JsonResult result = new JsonResult();
@@ -639,15 +639,34 @@ public class AccountController {
         if(info!=null ){
             if(info.getSwiftCode().equals(swiftCode)){
                 json.put("cardCanUse",true);
-                json.put("errorMsg","可用");
+                json.put("errorMsg", "可用");
             }else{
                 json.put("cardCanUse",false);
                 json.put("errorMsg","卡号与所选银行不符");
+                result.setData(json);
+                return result;
             }
         }else{
             json.put("cardCanUse",false);
             json.put("errorMsg", "未找到卡信息");
+            result.setData(json);
+            return result;
         }
+
+        Users user = CheckLoginInterceptor.getUsers(request.getSession());
+
+        List<BindCardInfo> cards = accountRpcService.queryBindCardList(user.getUserCode(), 0);
+
+        for(BindCardInfo cardInfo:cards){
+            if(cardInfo.getCardNo().equals(cardno)){
+                json.put("cardCanUse",false);
+                json.put("errorMsg", "此卡已绑定快捷支付,请换其它卡!");
+                result.setData(json);
+                return result;
+            }
+        }
+        json.put("cardCanUse",true);
+        json.put("errorMsg", "可用");
 
         result.setData(json);
 
@@ -679,7 +698,6 @@ public class AccountController {
         }
 
         Users user = CheckLoginInterceptor.getUsers(request.getSession());
-
 
         int settleType = 0;
 

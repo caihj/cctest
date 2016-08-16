@@ -49,7 +49,7 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 			String packetId = StringUtil.getSystemUniqueNo();
 			String msgsrvCmd = "SessionAdminBerBon getSessionAtt NA." + packetId + " " + sessionId + " @BerbonSessClt.AgentLogin @BerbonSessClt.user";
 			String result = msgSrvProxyFacade.getResult(new ProxyRequestParam(5, packetId, 2, msgsrvCmd));
-			System.err.println(sessionId);
+			logger.info("sessionId:"+sessionId);
 			String[] results = result.split(" +");
 			String requestURL = request.getRequestURL().toString();
 			if (requestURL.contains("?")) {
@@ -59,11 +59,13 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 			if ("1".equals(results[3])) {
 				String loginState = Base64.decode(results[4], "GBK");
 				if (!"true".equals(loginState)) {
-					if (!(requestURL.contains("fuelcard/index.htm")||requestURL.contains("mobiledata/index.htm")||requestURL.contains("broadband/index.htm")||requestURL.contains("007bao/index.htm")||requestURL.contains("report/index.htm")||requestURL.contains("mobilebatch/index.htm")||requestURL.contains("etcinfo/index.htm")||requestURL.contains("sztcard/index.htm"))) {
-						response.getWriter().write(MyUtils.getJsonP(request,JSONObject.toJSONString(new DataResponse(MyErrorCodeEnum.not_login.getErrCode(), MyErrorCodeEnum.not_login.getOutDesc(), null))));
+					if(requestURL.endsWith(".htm")){
+						response.sendRedirect(constant.getRedictUrl());
+					}else if(requestURL.endsWith(".json")){
+						JsonResult jResult = new JsonResult();
+						jResult.setResult(ResultAck.not_login);
+						response.getWriter().write(JSONObject.toJSONString(jResult));
 						return false;
-					}else {
-						throw new BusinessRuntimeException("","");
 					}
 				}
 				String userString = Base64.decode(results[5], "GBK");
@@ -94,9 +96,11 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 		String userString = (String) httpSession.getAttribute("user");
 		Users users = null;
 		if (userString != null) {
+			logger.info("normal session seted");
 			users = JSONObject.parseObject(userString, Users.class);
 		}else{
 			//for test
+			logger.info("test session seted");
 			users =  new Users();
 			users.setUserCode("83986576");
 		}

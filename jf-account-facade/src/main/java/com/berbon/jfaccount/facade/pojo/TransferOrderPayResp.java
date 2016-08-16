@@ -1,11 +1,12 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * Created by chj on 2016/8/12.
  */
-public class TransferOrderPayResp {
+public class TransferOrderPayResp  implements Serializable {
     private String resultCode;
     private String resultMsg;
     private String orderId;

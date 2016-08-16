@@ -1,6 +1,7 @@
 package com.berbon.jfaccount.Dao;
 
 import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
+import com.berbon.jfaccount.util.Pair;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
 import com.sztx.util.mapper.BaseMapper;
@@ -11,6 +12,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
+import java.security.KeyPair;
 import java.sql.Connection;
 import java.sql.Date;
 import java.sql.PreparedStatement;
@@ -29,6 +31,27 @@ public class ChargeOrderDao {
     @Autowired
     private JdbcTemplate slaveTemplate;
 
+    public static Pair<Integer,String> ChargeCodeToState(String code){
+
+        Pair<Integer,String> t0 = new Pair<Integer,String>(0,"初始态");
+        Pair<Integer,String> t1 = new Pair<Integer,String>(1,"充值中");
+        Pair<Integer,String> t2 = new Pair<Integer,String>(2,"成功");
+        Pair<Integer,String> t3 = new Pair<Integer,String>(3,"失败");
+        Pair<Integer,String> t4 = new Pair<Integer,String>(4,"未知");
+
+        Pair<Integer,String> [] arr =( Pair<Integer,String>[])(new Object[]{t0,t1,t2,t3,t4});
+
+        int iCode=4;
+
+        try {
+            iCode = Integer.parseInt(code);
+        }catch (Exception e){
+
+        }
+
+        return arr[iCode-1];
+    }
+
     public ChargeOrderInfo newOrder(final ChargeOrderInfo info){
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -45,6 +68,7 @@ public class ChargeOrderDao {
                 "`stateDesc`,\n" +
                 "`callbackTime`,\n" +
                 "`tradeOrderId`,\n" +
+
                 "`payValue`,\n" +
                 "`bankId`,\n" +
                 "`attach`,\n" +
@@ -56,9 +80,11 @@ public class ChargeOrderDao {
                 "`expireDate`,\n" +
                 "`realName`,\n" +
                 "`identityNo`,\n" +
-                "`mobileNo`)\n" +
+                "`mobileNo`," +
+                "`fromIp`," +
+                "`fromMob`)\n" +
                 "VALUES\n" +
-                "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)\n";
+                "(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)\n";
 
         masterTemplate.update(new PreparedStatementCreator() {
             public PreparedStatement createPreparedStatement(Connection con)
@@ -74,7 +100,12 @@ public class ChargeOrderDao {
                 ps.setInt(i++, info.getSrcChannel());
                 ps.setInt(i++, info.getState());
                 ps.setString(i++, info.getStateDesc());
-                ps.setDate(i++, new Date(info.getCallbackTime().getTime()));
+
+                if(info.getCallbackTime()!=null)
+                    ps.setDate(i++, new Date(info.getCallbackTime().getTime()));
+                else
+                    ps.setDate(i++, null);
+
                 ps.setString(i++, info.getTradeOrderId());
 
                 ps.setLong(i++, info.getPayValue());
@@ -89,6 +120,8 @@ public class ChargeOrderDao {
                 ps.setString(i++, info.getRealName());
                 ps.setString(i++, info.getIdentityNo());
                 ps.setString(i++, info.getMobileNo());
+                ps.setString(i++,info.getFromIp());
+                ps.setString(i++,info.getFromMob());
                 return ps;
             }
         }, keyHolder);
@@ -111,6 +144,45 @@ public class ChargeOrderDao {
         ChargeOrderInfo order = slaveTemplate.queryForObject(sql,new BaseMapper<ChargeOrderInfo>(ChargeOrderInfo.class));
 
         return order;
+    }
+
+    public ChargeOrderInfo getByBusOrderNo(String chargeBussOrderNo){
+
+        String sql = "select * from account_charge_order where chargeBussOrderNo=\""+chargeBussOrderNo+"\"";
+
+        ChargeOrderInfo order = slaveTemplate.queryForObject(sql,new BaseMapper<ChargeOrderInfo>(ChargeOrderInfo.class));
+
+        return order;
+    }
+
+
+    public int update(final long id, final String tradeOderNo, final int state, final String stateDesc, final int cardType
+    ,final String bindNo,final long payValue){
+
+        return slaveTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con.prepareStatement("update account_charge_order set tradeOrderId=?,state=?" +
+                        "stateDesc=?,callbackTime=?,payValue=?,bindNo=?,type=?,cardType=? where id=?");
+
+
+                int i=1;
+                ps.setString(i++,tradeOderNo);
+                ps.setInt(i++, state);
+                ps.setString(i++, stateDesc);
+                ps.setDate(i++, new Date(new java.util.Date().getTime()));
+
+                ps.setLong(i++,payValue);
+                ps.setString(i++,bindNo);
+                ps.setInt(i++, 1);
+                ps.setInt(i++, cardType);
+
+
+                ps.setLong(i++,id);
+
+                return ps;
+            }
+        });
     }
 
 }

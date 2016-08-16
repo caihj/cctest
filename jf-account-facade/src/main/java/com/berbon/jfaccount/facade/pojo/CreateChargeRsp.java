@@ -1,11 +1,12 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * Created by chj on 2016/8/12.
  */
-public class CreateChargeRsp {
+public class CreateChargeRsp implements Serializable{
 
     private String resultCode;
     private String resultMsg;

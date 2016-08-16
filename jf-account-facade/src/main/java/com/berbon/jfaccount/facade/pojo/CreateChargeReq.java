@@ -11,7 +11,7 @@ public class CreateChargeReq implements Serializable{
     private Integer amount;
     private int type;
 
-    private int cardType;
+    private Integer cardType =-1;
     private String cardNo;
     private String cvv;
     private String expireDate;
@@ -26,6 +26,16 @@ public class CreateChargeReq implements Serializable{
     private int srcChannel;
 
     private String attach;
+
+    private String ip;
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
 
     public String getBindNo() {
         return bindNo;
@@ -145,5 +155,9 @@ public class CreateChargeReq implements Serializable{
 
     public void setAttach(String attach) {
         this.attach = attach;
+    }
+
+    public void setCardType(Integer cardType) {
+        this.cardType = cardType;
     }
 }

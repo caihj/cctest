@@ -1,5 +1,6 @@
 package com.berbon.jfaccount.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.Dao.ChargeOrderDao;
 import com.berbon.jfaccount.Dao.TransferOrderDao;
 import com.berbon.jfaccount.Service.SignService;
@@ -12,10 +13,8 @@ import com.berbon.jfaccount.util.UtilTool;
 import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
-import com.sztx.pay.center.rpc.api.domain.ChargeRequest;
-import com.sztx.pay.center.rpc.api.domain.TradeResponse;
-import com.sztx.pay.center.rpc.api.domain.TransferRequest;
-import com.sztx.pay.center.rpc.api.domain.VerifyQuickPayRequest;
+import com.sztx.pay.center.rpc.api.domain.*;
+import com.sztx.pay.center.rpc.api.service.AccountRpcService;
 import com.sztx.pay.center.rpc.api.service.TradeRpcService;
 import com.sztx.se.rpc.dubbo.source.DynamicDubboClient;
 import com.sztx.usercenter.rpc.api.domain.out.UserVO;
@@ -55,9 +54,11 @@ public class AccountFacadeImpl implements AccountFacade {
     @Override
     public ChargeOrderInfo createChargeQuckPay(CreateChargeReq data) {
 
-        String orderId = UtilTool.createOrderId(UtilTool.ChargeOrderPrefix);
+        String orderId = UtilTool.generateChargeOrderId();
 
         ChargeOrderInfo info = new ChargeOrderInfo();
+
+        info.setChargeUserCode(data.getUserCode());
 
         info.setChargeBussOrderNo(orderId);
         info.setBankId(data.getBankId());
@@ -245,6 +246,9 @@ public class AccountFacadeImpl implements AccountFacade {
         charge.setNotifyUrl(initBean.backNotifyUrl);
         charge.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreateTime()));
         charge.setSignType("MD5");
+        charge.setBusinessType(initBean.chargeBusinessType);
+        charge.setChannelId(initBean.channelId);
+        charge.setSrcIp(req.getIp());
 
         charge.setAttach(attach);
 
@@ -315,6 +319,7 @@ public class AccountFacadeImpl implements AccountFacade {
 
 
         try {
+            logger.info("调用支付，报文"+ JSONObject.toJSONString(charge));
             TradeResponse response = tradeRpcService.charge(charge);
             rsp.setResultCode(response.getResultCode());
             rsp.setResultCode(response.getResultMsg());
@@ -359,7 +364,7 @@ public class AccountFacadeImpl implements AccountFacade {
 
         TransferOrderInfo orderInfo = new TransferOrderInfo();
 
-        orderInfo.setOrderId(UtilTool.createOrderId("ZZ"));
+        orderInfo.setOrderId(UtilTool.generateTransferOrderId());
         orderInfo.setFromUserCode(req.getFromUserCode());
         orderInfo.setToUserCode(req.getToUserCode());
         orderInfo.setAmount(req.getAmount());
@@ -461,5 +466,138 @@ public class AccountFacadeImpl implements AccountFacade {
         rsp.setPayParams(resp.getPayParams());
 
         return rsp;
+    }
+
+    @Override
+    public UnBindBankCardRsp unBindBankCard(String userCode, String bindNo, String paypwd) {
+        UnBindBankCardRsp rsp = new UnBindBankCardRsp();
+
+        boolean isOk =  signService.checkUserPayPasswd(userCode,paypwd);
+
+        if(isOk==false){
+            rsp.setIsOk(false);
+            rsp.setMsg("支付密码错误");
+            return  rsp;
+        }
+
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+
+        try{
+            accountRpcService.unbindCard(userCode,bindNo);
+        }catch (Exception e){
+            logger.error("发生异常"+e);
+            e.printStackTrace();
+            rsp.setIsOk(false);
+            rsp.setMsg("系统繁忙，请稍后再试!");
+            return  rsp;
+        }
+
+        rsp.setIsOk(true);
+        rsp.setMsg("成功");
+        return  rsp;
+    }
+
+    @Override
+    public BindNewCardRsp bindNewBankCard(BindNewCardReq req) {
+
+
+        BindNewCardRsp rsp = new BindNewCardRsp();
+
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+        QueryUserInfoService  queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
+
+
+        BindCardRequest bindReq = new BindCardRequest();
+
+        bindReq.setUserId(req.getUserCode());
+        bindReq.setBindType(req.getBindType());
+        bindReq.setCardActType(1);
+        bindReq.setCardType(req.getCardType());
+        bindReq.setCardNo(req.getCardNo());
+        bindReq.setCvv(req.getCvv());
+        bindReq.setExpireDate(req.getExpireDate());
+
+
+        UserVO  uservo = queryUserInfoService.getUserInfo(req.getUserCode());
+
+        if(uservo.getIsAuth()==0){
+            logger.error("该用户未实名，不能绑卡");
+
+            rsp.setIsOk(false);
+            rsp.setMsg("未实名认证，不能绑卡!");
+            return rsp;
+        }
+
+        bindReq.setRealName(uservo.getRealname());
+        bindReq.setIdentityNo(uservo.getIdentityid());
+        bindReq.setMobileNo(uservo.getMob());
+        bindReq.setChannelId(initBean.channelId);
+        bindReq.setIsWithdrawCard(1);
+
+        String bindNO;
+
+        try{
+            bindNO =   accountRpcService.bindCard(bindReq);
+        }catch (Exception e){
+            logger.error("绑卡失败,系统异常"+e);
+            rsp.setIsOk(false);
+            rsp.setMsg("系统繁忙，请稍后再试");
+            return rsp;
+        }
+
+        if(bindNO!=null && bindNO.trim().isEmpty()==false) {
+            rsp.setIsOk(true);
+            rsp.setMsg("成功");
+            rsp.setBindNo(bindNO);
+        }else{
+            rsp.setIsOk(false);
+            rsp.setMsg("系统繁忙，请稍后再试");
+        }
+        return rsp;
+    }
+
+    @Override
+    public ConfirmBindMsgRsp confirmBindMsg(ConfirmBindMsgReq req) {
+
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+
+        ConfirmBindMsgRsp rsp = new ConfirmBindMsgRsp();
+
+        boolean ret;
+
+        try {
+            ret = accountRpcService.verifyBindCard(req.getBindNo(), req.getVerifyCode());
+        }catch (Exception e){
+            logger.error("发生异常:"+e);
+            ret = false;
+        }
+
+        rsp.setIsOk(ret);
+        if(ret==false) {
+            rsp.setMsg("系统繁忙，请稍后再试");
+        }else{
+            rsp.setMsg("成功");
+        }
+
+        return rsp;
+    }
+
+    @Override
+    public boolean reSendBindMsg(String userCode, String bindNo) {
+
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+
+        boolean ret;
+
+        try{
+            ret = accountRpcService.resendVerifyCode(bindNo);
+        }
+        catch (Exception e){
+            logger.error("发生异常:"+e);
+            ret = false;
+        }
+
+
+        return ret;
     }
 }

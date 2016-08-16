@@ -30,7 +30,9 @@ public class ChargeOrderInfo implements Serializable {
     private String expireDate; //有效期格式yyMM
     private String realName; //真实姓名
     private String identityNo; //证件号
-    private String mobileNo; //手机号
+    private String mobileNo; //手机号,银行卡预留
+    private String fromIp;
+    private String fromMob;
 
     public long getId() {
         return id;
@@ -214,5 +216,21 @@ public class ChargeOrderInfo implements Serializable {
 
     public void setMobileNo(String mobileNo) {
         this.mobileNo = mobileNo;
+    }
+
+    public String getFromIp() {
+        return fromIp;
+    }
+
+    public void setFromIp(String fromIp) {
+        this.fromIp = fromIp;
+    }
+
+    public String getFromMob() {
+        return fromMob;
+    }
+
+    public void setFromMob(String fromPhone) {
+        this.fromMob = fromPhone;
     }
 }

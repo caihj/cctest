@@ -45,14 +45,14 @@ public class Start {
             {
                 throw new Exception("webapp path is wrong!");
             }
-            webAppContext.setResourceBase(webappFile.getFile().getCanonicalPath());
+			webAppContext.setResourceBase(webappFile.getFile().getCanonicalPath());
 			webAppContext.setInitParameter("org.eclipse.jetty.servlet.Default.dirAllowed", "false");
 			webAppContext.setInitParameter("org.eclipse.jetty.servlet.Default.redirectWelcome", "false");
 			webAppContext.setInitParameter("org.eclipse.jetty.servlet.Default.welcomeServlets", "exact");
 			webAppContext.setContextPath("/");
 			webAppContext.setWelcomeFiles(new String[]{"index.htm"});
 			server.setHandler(webAppContext);
-			
+
 			server.start();
 			logger.info("jfaccount-web start sucess!");
 			server.join();

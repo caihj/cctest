@@ -32,6 +32,43 @@ public class TransferOrderDao  {
     @Autowired
     private JdbcTemplate slaveTemplate;
 
+    public static enum OrderState {
+        wait_pay(1,"待支付"),
+        paying(2,"支付中"),
+        succ(3,"成功"),
+        fail(4,"失败"),
+        exception(5,"异常");
+        OrderState(int state,String desc){
+            this.state = state;
+            this.desc = desc;
+        }
+        public int state;
+        public String desc;
+    }
+
+    /**
+     *
+     * @return
+     */
+    public static  OrderState GetState(String state){
+        if(state.equals("1")){
+            return OrderState.wait_pay;
+        }else if(state.equals("2")){
+            return OrderState.paying;
+        }
+        else if(state.equals("3")){
+            return OrderState.succ;
+        }
+        else if(state.equals("4")){
+            return OrderState.fail;
+        }
+        else if(state.equals("5")){
+            return OrderState.exception;
+        }else{
+            return OrderState.exception;
+        }
+    }
+
     public TransferOrderInfo createOrder(final TransferOrderInfo order){
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -91,8 +128,16 @@ public class TransferOrderDao  {
                 ps.setString(i++, order.getCardCity());
                 ps.setString(i++, order.getAttach());
                 ps.setString(i++, order.getReference());
-                ps.setDate(i++, new Date(order.getCreateTime().getTime()));
-                ps.setDate(i++, new Date(order.getExpireTime().getTime()));
+                if(order.getCreateTime()!=null)
+                    ps.setDate(i++, new Date(order.getCreateTime().getTime()));
+                else
+                    ps.setDate(i++, null);
+
+                if(order.getCreateTime()!=null)
+                    ps.setDate(i++, new Date(order.getExpireTime().getTime()));
+                else
+                    ps.setDate(i++, null);
+
                 ps.setInt(i++, order.getIsUsePwd());
                 ps.setString(i++, order.getChannelId());
                 ps.setString(i++, order.getBusinessType());
@@ -167,6 +212,32 @@ public class TransferOrderDao  {
 
         }
         return result;
+    }
+
+
+    public int update(final long id, final int state, final String stateDesc,final String tradeOderNo,final int payType){
+
+        return slaveTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con.prepareStatement("update account_transfer_order set tradeOrderId=?,state=?" +
+                        "stateDesc=?,callbackTime=?,payType=? where id=?");
+
+                int i=1;
+
+                ps.setString(i++, tradeOderNo);
+                ps.setInt(i++, state);
+                ps.setString(i++, stateDesc);
+                ps.setDate(i++, new Date(new java.util.Date().getTime()));
+                ps.setInt(i++, payType);
+
+                ps.setLong(i++,id);
+
+                return ps;
+            }
+        });
+
+
     }
 
 }

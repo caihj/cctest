@@ -7,8 +7,8 @@ public  enum ResultAck {
 
     succ("0","成功"),
     fail("-1","失败"),
-    para_error("-2","参数错误");
-
+    para_error("-2","参数错误"),
+    not_login("-3","参数错误");
 
     ResultAck(String code,String desc){
         this.code=code;

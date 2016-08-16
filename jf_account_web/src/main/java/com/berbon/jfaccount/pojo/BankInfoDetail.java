@@ -19,7 +19,7 @@ public class BankInfoDetail extends BankInfo {
         this.setBankId(info.getBankId());
         this.setPassClipherPay(info.isPassClipherPay());
 
-        if(limit.getLimitInfos()!=null) {
+        if(limit!=null && limit.getLimitInfos()!=null) {
             for (BankPayLimitInfo.LimitInfo tmpLimit : limit.getLimitInfos()) {
                 this.limitInfo.add(new LimitInfo(tmpLimit));
             }

@@ -5,6 +5,7 @@ import com.berbon.jfaccount.commen.InitBean;
 import com.berbon.jfaccount.commen.JsonResult;
 import com.berbon.jfaccount.commen.ResultAck;
 import com.berbon.jfaccount.facade.pojo.*;
+import com.berbon.jfaccount.utils.IpTool;
 import com.berbon.jfaccount.utils.SignUtil;
 import com.berbon.user.pojo.Users;
 import com.berbon.util.String.StringUtil;
@@ -87,6 +88,7 @@ public class ChargeController {
         String identityNo = request.getParameter("identityNo");
         String mobileNo = request.getParameter("mobileNo");
         String bankId = request.getParameter("bankId");
+        String paypwd = request.getParameter("paypwd");
 
         Users user = CheckLoginInterceptor.getUsers(request.getSession());
 
@@ -96,7 +98,10 @@ public class ChargeController {
 
         data.setType(type);
         data.setBindNo(bindNo);
-        data.setCardType(Integer.parseInt(cardType));
+
+        if(cardType!=null && cardType.isEmpty()==false)
+            data.setCardType(Integer.parseInt(cardType));
+
         data.setCardNo(cardNo);
         data.setCvv(cvv);
         data.setExpireDate(expireDate);
@@ -105,9 +110,12 @@ public class ChargeController {
         data.setMobileNo(mobileNo);
         data.setAmount(amount);
         data.setBankId(bankId);
+        data.setPayPwd(paypwd);
+
+        data.setIp(IpTool.getIp(request));
 
         CreateChargeRsp rsp = accountFacade.createChargeOrder(data);
-
+        result.setResult(ResultAck.succ);
         result.setData(rsp);
 
         return result;

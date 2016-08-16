@@ -12,6 +12,7 @@ public class UtilTool {
     private static int randomNum = 1;//生成订单号的随机数
 
     public static String ChargeOrderPrefix = "CZ";
+    public static String transferOrderPrefix = "ZZ";
 
     private static  String getRandom(int randomNum, int needNum) {
         String result = randomNum + "";
@@ -31,4 +32,13 @@ public class UtilTool {
             return orderId;
         }
     }
+
+    public static String generateChargeOrderId(){
+        return createOrderId(ChargeOrderPrefix);
+    }
+
+    public static String generateTransferOrderId(){
+        return createOrderId(transferOrderPrefix);
+    }
+
 }
