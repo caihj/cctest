@@ -6,8 +6,11 @@ import com.berbon.jfaccount.commen.ResultAck;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.pojo.*;
 import com.berbon.user.pojo.Users;
+import com.sztx.usercenter.rpc.api.domain.out.UserVO;
+import com.sztx.usercenter.rpc.api.service.QueryUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -28,13 +31,26 @@ public class MyCardController {
 
     private AccountFacade accountFacade;
 
+    private QueryUserInfoService queryUserInfoService;
+
     @ModelAttribute
     public void init(){
         accountFacade = dubboClient.getDubboClient("accountFacade");
+        queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
     }
 
     @RequestMapping(value = "/bind" , method ={ RequestMethod.POST, RequestMethod.GET})
-    public String getPage1(){
+    public String getPage1(ModelMap map,HttpServletRequest request){
+
+        Users user = CheckLoginInterceptor.getUsers(request.getSession());
+
+        UserVO userVO = queryUserInfoService.getUserInfo(user.getUserCode());
+
+        String makeIdNo =  userVO.getIdentityid().substring(0, 4)+"***********"+userVO.getIdentityid().substring(userVO.getIdentityid().length() - 3, userVO.getIdentityid().length());
+
+        map.put("realName",userVO.getRealname());
+        map.put("identityNo",makeIdNo);
+
         return "/myCard/addBankCard";
     }
 

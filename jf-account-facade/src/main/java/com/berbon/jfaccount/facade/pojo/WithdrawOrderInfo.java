@@ -17,7 +17,34 @@ public class WithdrawOrderInfo implements Serializable {
     private Date createtime;
     private int state;
     private String stateDesc;
-    private String resultTime;
+    private Date resultTime;
+    private String orderId;
+    private String tradOrderId;
+    private String ip;
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public String getOrderId() {
+        return orderId;
+    }
+
+    public void setOrderId(String orderId) {
+        this.orderId = orderId;
+    }
+
+    public String getTradOrderId() {
+        return tradOrderId;
+    }
+
+    public void setTradOrderId(String tradOrderId) {
+        this.tradOrderId = tradOrderId;
+    }
 
     public long getId() {
         return id;
@@ -83,11 +110,13 @@ public class WithdrawOrderInfo implements Serializable {
         this.stateDesc = stateDesc;
     }
 
-    public String getResultTime() {
+    public Date getResultTime() {
         return resultTime;
     }
 
-    public void setResultTime(String resultTime) {
+    public void setResultTime(Date resultTime) {
         this.resultTime = resultTime;
     }
+
+
 }

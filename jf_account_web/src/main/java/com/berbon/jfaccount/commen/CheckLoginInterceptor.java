@@ -13,9 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.servlet.handler.HandlerInterceptorAdapter;
 
 import com.alibaba.fastjson.JSONObject;
-import com.berbon.jfaccount.utils.Constant;
-import com.berbon.jfaccount.utils.MyUtils;
-import com.berbon.jfaccount.vo.DataResponse;
 import com.berbon.msgsrv.proxy.facade.MsgSrvProxyFacade;
 import com.berbon.msgsrv.proxy.pojo.ProxyRequestParam;
 import com.berbon.user.pojo.Users;
@@ -34,7 +31,7 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 	static Logger logger = LoggerFactory.getLogger(CheckLoginInterceptor.class);
 
 	@Autowired
-	private Constant constant;
+	private InitBean initBean;
 	@Autowired
 	private MsgSrvProxyFacade msgSrvProxyFacade;
 
@@ -42,7 +39,7 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 	public  boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws IOException {
 		try {
 			response.setContentType("text/html;charset=UTF-8");
-			String sessionId = getCookie(request, constant.getBerbonsessionId());
+			String sessionId = getCookie(request, initBean.berbonsessionId);
 			if (sessionId == null) {
 				throw new BusinessRuntimeException("", "");
 			}
@@ -60,7 +57,7 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 				String loginState = Base64.decode(results[4], "GBK");
 				if (!"true".equals(loginState)) {
 					if(requestURL.endsWith(".htm")){
-						response.sendRedirect(constant.getRedictUrl());
+						response.sendRedirect(initBean.redictUrl);
 					}else if(requestURL.endsWith(".json")){
 						JsonResult jResult = new JsonResult();
 						jResult.setResult(ResultAck.not_login);
@@ -74,8 +71,8 @@ public class CheckLoginInterceptor extends HandlerInterceptorAdapter {
 				return true;
 			}
 		} catch (BusinessRuntimeException e) {
-			logger.info("跳转地址："+constant.getRedictUrl());
-			response.sendRedirect(constant.getRedictUrl());
+			logger.info("跳转地址："+initBean.redictUrl);
+			response.sendRedirect(initBean.redictUrl);
 		}
 		
 		return false;

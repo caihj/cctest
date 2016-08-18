@@ -42,6 +42,9 @@ public class InitBean implements InitializingBean {
     @Value("${tranferBusinessType}")
     public String tranferBusinessType;
 
+    @Value("${withdrawBusinessType}")
+    public String withdrawBusinessType;
+
     public int maxChargeOrderAliveSec;
 
 

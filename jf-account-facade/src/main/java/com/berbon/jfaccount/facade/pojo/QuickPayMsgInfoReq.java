@@ -13,6 +13,8 @@ public class QuickPayMsgInfoReq implements Serializable {
     //来源渠道 1网站，2手机，3微信,4内部
     private String srcChannel;
 
+    private String ip;
+
     public String getVerifyCode() {
         return verifyCode;
     }
@@ -43,5 +45,13 @@ public class QuickPayMsgInfoReq implements Serializable {
 
     public void setSrcChannel(String srcChannel) {
         this.srcChannel = srcChannel;
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
     }
 }

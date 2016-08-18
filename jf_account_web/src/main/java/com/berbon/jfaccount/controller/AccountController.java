@@ -1,16 +1,18 @@
 package com.berbon.jfaccount.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.berbon.jfaccount.commen.*;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.common.PageResult;
+import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
+import com.berbon.jfaccount.facade.pojo.NotifyType;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
+import com.berbon.jfaccount.facade.pojo.ValNotifyRsp;
 import com.berbon.jfaccount.pojo.BankInfoDetail;
-import com.berbon.jfaccount.commen.CheckLoginInterceptor;
-import com.berbon.jfaccount.commen.JsonResult;
-import com.berbon.jfaccount.commen.ResultAck;
 import com.berbon.jfaccount.pojo.CashRecord;
 import com.berbon.jfaccount.pojo.ChargeRecord;
 import com.berbon.jfaccount.pojo.TransferData;
+import com.berbon.jfaccount.utils.MyUtils;
 import com.berbon.user.pojo.Users;
 import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
@@ -60,7 +62,7 @@ public class AccountController {
 
     private QueryService queryService;
 
-    private PayFlowRpcService payFlowRpcService;
+
 
     private BankRpcService bankRpcService;
 
@@ -70,17 +72,25 @@ public class AccountController {
 
     private AccountFacade accountFacade;
 
+    private UserActFlowRpcService userActFlowRpcService;
+
     @ModelAttribute
     public  void init(){
-        tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
-        accountRpcService = dubboClient.getDubboClient("accountRpcService");
-        queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
-        queryService = dubboClient.getDubboClient("queryService");
-        payFlowRpcService = dubboClient.getDubboClient("payFlowRpcService");
-        bankRpcService = dubboClient.getDubboClient("bankRpcService");
-        bankPayLimitRpcService = dubboClient.getDubboClient("bankPayLimitRpcService");
-        settleRpcService = dubboClient.getDubboClient("settleRpcService");
-        accountFacade = dubboClient.getDubboClient("accountFacade");
+        try {
+            tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
+            accountRpcService = dubboClient.getDubboClient("accountRpcService");
+            queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
+            queryService = dubboClient.getDubboClient("queryService");
+
+            bankRpcService = dubboClient.getDubboClient("bankRpcService");
+            bankPayLimitRpcService = dubboClient.getDubboClient("bankPayLimitRpcService");
+            settleRpcService = dubboClient.getDubboClient("settleRpcService");
+            accountFacade = dubboClient.getDubboClient("accountFacade");
+            userActFlowRpcService = dubboClient.getDubboClient("userActFlowRpcService");
+
+        }catch (Exception e){
+            logger.error("发生异常"+e);
+        }
     }
 
     /**
@@ -97,6 +107,88 @@ public class AccountController {
         result.setData(user);
         return result;
     }
+
+    @RequestMapping(value = "rechargeResult" , method = { RequestMethod.POST, RequestMethod.GET})
+     public String chargeSucc(HttpServletRequest request, ModelMap map){
+
+
+        String tradeOrderNo = request.getParameter("tradeOrderNo");
+
+        //查询订单
+        ChargeOrderInfo order = accountFacade.queryChargeOrderInfo(tradeOrderNo);
+
+        if(order!=null){
+
+            int state  = order.getState();
+
+            if(state==2){
+                map.put("tradeAmount",order.getAmount()/100.0);
+                return "/account/rechargeResult";
+            }else if(state==1 || state==0 ){
+                map.put("errorCode", "-1");
+                map.put("errorMsg","订单未支付");
+                return ConstStr.error_page;
+            }else {
+                map.put("errorCode", "-1");
+                map.put("errorMsg","充值失败,请稍后再试，或联系客服");
+                return ConstStr.error_page;
+            }
+        }else{
+            map.put("errorCode","-1");
+            map.put("errorMsg","未找到订单");
+            return ConstStr.error_page;
+        }
+
+    }
+
+    @RequestMapping(value = "rechargeResultNotify" , method = { RequestMethod.POST, RequestMethod.GET})
+    public String chargeSuccNotify(HttpServletRequest request,ModelMap map){
+
+        Map params = request.getParameterMap();
+
+       //通知验签
+        ValNotifyRsp rsp = accountFacade.valFrontNotify(params, NotifyType.charge_notify);
+
+        if(rsp.getCode().equals(ValNotifyRsp.CODE.succ)){
+            map.put("tradeAmount",rsp.getAmount()/100.0);
+         }else if(rsp.getCode() == ValNotifyRsp.CODE.fail || rsp.getCode() == ValNotifyRsp.CODE.exception){
+            map.put("errorCode", "-1");
+            map.put("errorMsg","充值失败,请稍后再试，或联系客服");
+            return ConstStr.error_page;
+        }
+
+        return "/account/rechargeEBankResult";
+    }
+
+
+    @RequestMapping(value = "transferResult" , method = { RequestMethod.POST, RequestMethod.GET})
+    public String transferResult(HttpServletRequest request , ModelMap map){
+
+        String tradeOrderNo = request.getParameter("tradeOrderNo");
+        TransferOrderInfo order = accountFacade.queryTransferOrderInfo(tradeOrderNo);
+
+        if(order!=null){
+            map.put("payeeName", MyUtils.markName(order.getRealName()));
+            map.put("tradeAmount", order.getAmount()/100.0);
+            return "/account/transferResult";
+        }else{
+            map.put("errorCode", "-1");
+            map.put("errorMsg","未找到订单");
+            return ConstStr.error_page;
+        }
+
+    }
+
+
+    @RequestMapping(value = "transferResultNotify" , method = { RequestMethod.POST, RequestMethod.GET})
+    public String transferResultNotify(HttpServletRequest request){
+
+        Map<String, String[]> map = request.getParameterMap();
+
+
+        return "/account/transferEBankResult";
+    }
+
 
     /**
      * 账户首页
@@ -125,7 +217,8 @@ public class AccountController {
 
 
         //fixme 账户余额
-        int balance = accountRpcService.queryBalance(user.getUserCode(), 1);
+        int balance = accountRpcService.queryBalance(user.getUserCode(), 8);
+        logger.info(user.getUserCode()+",余额"+balance);
         int freezeBalance = 0;
         //账户余额
         pageMap.put("actBalance", (balance + freezeBalance+0.0)/100.0);
@@ -153,12 +246,12 @@ public class AccountController {
 
         Users user = CheckLoginInterceptor.getUsers(request.getSession());
 
-        int balance = accountRpcService.queryBalance(user.getUserCode(), 1);
+        int balance = accountRpcService.queryBalance(user.getUserCode(), 8);
 
         String bindNo = request.getParameter("bindNo");
 
         UserVO userVO = queryUserInfoService.getUserInfo(user.getUserCode());
-        map.put("balance",balance);
+        map.put("balance",balance/100.0);
         map.put("realName",userVO.getRealname());
         map.put("loginName",userVO.getUserCode());
 
@@ -295,7 +388,15 @@ public class AccountController {
                     TransferData transferData = new TransferData();
                     transferData.setAddTime(t.getCreateTime());
                     transferData.setTransferOrderId(t.getOrderId());
-                    //transferData.setTransferTypeStr(t.gett);
+
+                    if(t.getPayType()==1){
+                        transferData.setTransferTypeStr("余额转账");
+                    }else if(t.getPayType()==2){
+                        transferData.setTransferTypeStr("快捷支付");
+                    }else {
+                        transferData.setTransferTypeStr("");
+                    }
+
 
                     String otherAccount;
                     String intOrOut;
@@ -388,9 +489,9 @@ public class AccountController {
                 ChargeRecord  record = new ChargeRecord();
 
                 record.setAddTime(t.getAddTime());
-                record.setRechargeOrderId(t.getRechargeOrderId());
+                record.setRechargeOrderId(t.getOrderId());
                 record.setRechargeChannelStr(t.getRechargeChannelStr());
-                record.setRechargeAmount(t.getRechargeAmount().longValue()/100.0+"");
+                record.setRechargeAmount(t.getRechargeAmount().doubleValue()+"");
                 record.setRechargeStatusStr(t.getRechargeStatusStr());
 
                 f_records.add(record);
@@ -443,17 +544,19 @@ public class AccountController {
                 endD = new Date();
             }
 
-            PayFlowRequest queryReq = new PayFlowRequest();
+            UserActFlowRequest queryReq = new UserActFlowRequest();
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
             queryReq.setUserId(user.getUserCode());
             queryReq.setPageNo(Integer.parseInt(pageNo));
             queryReq.setPageSize(Integer.parseInt(pageSize));
             queryReq.setStartDate(startD);
             queryReq.setEndDate(endD);
+            queryReq.setActType(8);
 
             if(tradeOrderNo!=null && tradeOrderNo.trim().isEmpty()==false){
-                queryReq.setTradeOrderNo(tradeOrderNo);
+                queryReq.setOriginOrderNo(tradeOrderNo);
             }
+
             if(type!=null && type.trim().isEmpty()==false){
                 if(type.equals("in")){
                    // queryReq.setTradeOrderType();
@@ -462,7 +565,7 @@ public class AccountController {
                 }
             }
 
-            PayFlowResponse records = payFlowRpcService.findUserPayFlow(queryReq);
+            UserActFlowResponse records = userActFlowRpcService.findUserActFlow(queryReq);
 
 
             JSONObject json = new JSONObject();
@@ -472,36 +575,45 @@ public class AccountController {
              total:100,
              rows
              */
-            json.put("inAmount", records.getInAmount());
-            json.put("outAmount", records.getOutAmount());
+            //json.put("inAmount", records.getInAmount());
+            //json.put("outAmount", records.getOutAmount());
             json.put("pageNo", pageNo);
             json.put("pageSize", pageSize);
             json.put("total", records.getTotal());
 
             List<CashRecord> f_records = new ArrayList<>();
-            for(PayFlowResponse.PayFlow  t :records.getPayFlows()){
+            for(UserActFlowResponse.UserActFlow t :records.getUserActFlowS()){
                 CashRecord record = new CashRecord();
-                record.setPayDate(t.getPayDate());
+                record.setPayDate(t.getTradeTime());
                 record.setTradeOrderNo(t.getTradeOrderNo());
-                record.setTradeOrderType(t.getTradeOrderType());
+                record.setTradeOrderType(t.getTradeType());
+
+                String otherAccount="";
+                String intOrOut="";
 
 
-                String otherAccount;
-                String intOrOut;
 
-                if(t.getPayeeUserId().equals(user.getUserCode())){
-                    otherAccount = t.getPayerUserId();
-                    intOrOut = "in";
-                }else {
-                    otherAccount = t.getPayeeUserId();
-                    intOrOut = "out";
-                }
+                //t.get
+
+//                if(t.getUserId().equals(user.getUserCode())){
+//                    otherAccount = t.getPayerUserId();
+//
+//                }else {
+//                    otherAccount = t.getPayeeUserId();
+//                }
 
                 record.setOtherAccount(otherAccount);
-                record.setType(intOrOut);
-                record.setAmount((t.getAmount() + 0.0f) / 100.0 + "");
-                //record.setBalance();
 
+                record.setAmount((Math.abs(t.getTranAmount()) + 0.0f) / 100.0 + "");
+                record.setBalance((t.getActBalance()+0.0f) / 100.0 + "");
+
+
+                if(t.getTranAmount()<0){
+                    intOrOut = "out";
+                }else {
+                    intOrOut = "in";
+                }
+                record.setType(intOrOut);
                 f_records.add(record);
             }
 
@@ -590,24 +702,20 @@ public class AccountController {
 
         if(user!=null){
             JSONObject json = new JSONObject();
-            json.put("loginName",user.getUserCode());
+            json.put("loginName", user.getUserCode());
 
-            String realName =user.getRealname();
-            if(realName!=null && realName.length()>0){
-                if(realName.length()==2){
-                    realName = "*"+realName.substring(1,2);
-                }else  if(realName.length()==3){
-                    realName = "*"+realName.substring(1,3);
-                }else if(realName.length()==4){
-                    realName = "**"+realName.substring(2,4);
-                }else{
-                    realName = "**"+realName.substring(2,realName.length());
-                }
-            }
+            String realName = MyUtils.markName(user.getRealname());
+
             json.put("realName",realName);
+            json.put("isOk",true);
+            result.setData(json);
+        }else{
+
+            JSONObject json = new JSONObject();
+
+            json.put("isOk",false);
             result.setData(json);
         }
-
         return result;
     }
 

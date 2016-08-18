@@ -4,6 +4,7 @@ import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.*;
 
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by chj on 2016/8/5.
@@ -89,5 +90,22 @@ public interface AccountFacade {
      *  false 系统异常
      */
     boolean reSendBindMsg(String userCode,String bindNo);
+
+
+    /**
+     *验证 前台通知
+     */
+    ValNotifyRsp  valFrontNotify(Map<String, String []> params,NotifyType type);
+
+
+    /**
+     * 查询充值订单
+     */
+    ChargeOrderInfo queryChargeOrderInfo(String tradeOrderId);
+
+    /**
+     * 查询转账订单
+     */
+    TransferOrderInfo queryTransferOrderInfo(String tradeOrderId);
 
 }

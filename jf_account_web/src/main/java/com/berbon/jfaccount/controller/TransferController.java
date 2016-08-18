@@ -1,10 +1,8 @@
 package com.berbon.jfaccount.controller;
 
-import com.berbon.jfaccount.commen.CheckLoginInterceptor;
-import com.berbon.jfaccount.commen.ConstStr;
-import com.berbon.jfaccount.commen.JsonResult;
-import com.berbon.jfaccount.commen.ResultAck;
+import com.berbon.jfaccount.commen.*;
 import com.berbon.jfaccount.facade.pojo.*;
+import com.berbon.jfaccount.utils.IpTool;
 import com.berbon.user.pojo.Users;
 import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
@@ -81,16 +79,17 @@ public class TransferController {
      * 创建转账订单
      * @return
      */
-    @RequestMapping(value = "/transfer" , method = RequestMethod.GET)
+    @RequestMapping(value = "/transfer" , method = {RequestMethod.GET,RequestMethod.POST})
     public String CreateTransferOrder(HttpServletRequest request,ModelMap map) {
 
         logger.info("recv  request /account/transferInit");
 
-        String userCode = request.getParameter("userCode");
+        String userCode = request.getParameter("payee");
         String amount = request.getParameter("amount");
-        String note = request.getParameter("note");
-        String phone = request.getParameter("phone");
+        String note = request.getParameter("remark");
+        String phone = request.getParameter("payeeMob");
         String realName = request.getParameter("realName");
+
         String orderId = request.getParameter("orderId");
 
         TransferOrderInfo order;
@@ -105,6 +104,8 @@ public class TransferController {
 
             TransferOrderCrtReq req = new TransferOrderCrtReq();
 
+
+            req.setReference(IpTool.getIp(request));
             req.setFromUserCode(user.getUserCode());
             req.setToUserCode(userCode);
             req.setAmount(Long.parseLong(amount));
@@ -115,17 +116,22 @@ public class TransferController {
             TransferOrderCrtRsp rsp = accountFacade.createTransferOrder(req);
             if (rsp == null || rsp.getOrderInfo() == null) {
                 logger.error("创建订单失败");
+                map.put("errorCode", MyErrorCodeEnum.system_error.getErrCode());
+                map.put("errorMsg",MyErrorCodeEnum.system_error.getOutDesc());
                 return ConstStr.error_page;
             }
             order = rsp.getOrderInfo();
+            orderId = order.getOrderId();
         }else if(orderId!=null && orderId.trim().isEmpty()==false){
             order = accountFacade.queryTransferDetail(orderId);
         }else{
+            map.put("errorCode", MyErrorCodeEnum.param_eror.getErrCode());
+            map.put("errorMsg",MyErrorCodeEnum.param_eror.getOutDesc());
             logger.error("参数错误");
             return ConstStr.error_page;
         }
 
-        int balance = accountRpcService.queryBalance(user.getUserCode(), 1);
+        int balance = accountRpcService.queryBalance(user.getUserCode(), 8);
 
         map.put("tradeNo",order.getOrderId());
         map.put("payee",order.getRealName());
@@ -140,6 +146,8 @@ public class TransferController {
         }
 
         map.put("hasMoney",hasMoney);
+        map.put("orderId",orderId);
+        logger.info("转账订单号:"+orderId);
 
         return "/account/transfer";
     }
@@ -150,6 +158,7 @@ public class TransferController {
      * @return
      */
     @RequestMapping(value = "payTransfer")
+    @ResponseBody
     public JsonResult payTransfer(HttpServletRequest request){
 
         JsonResult result = new JsonResult();
@@ -182,6 +191,7 @@ public class TransferController {
         req.setType(Integer.parseInt(type));
         req.setBindNo(bindNo);
         req.setPaypwd(paypwd);
+        req.setIp(IpTool.getIp(request));
 
         TransferOrderPayResp resp = accountFacade.payTransferOrder(req);
 

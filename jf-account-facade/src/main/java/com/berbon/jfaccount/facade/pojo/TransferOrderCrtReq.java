@@ -48,6 +48,14 @@ public class TransferOrderCrtReq implements Serializable {
     private String paypwd;
 
 
+    public String getReference() {
+        return reference;
+    }
+
+    public void setReference(String reference) {
+        this.reference = reference;
+    }
+
     public String getToUserCode() {
         return toUserCode;
     }

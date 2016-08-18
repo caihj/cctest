@@ -167,6 +167,21 @@ public class MyUtils {
 	            e.printStackTrace();  
 	        }  
 	    }  
-	 
+
+	public static  String markName(String realName){
+
+		if(realName!=null && realName.length()>0){
+			if(realName.length()==2){
+				realName = "*"+realName.substring(1,2);
+			}else  if(realName.length()==3){
+				realName = "*"+realName.substring(1,3);
+			}else if(realName.length()==4){
+				realName = "**"+realName.substring(2,4);
+			}else{
+				realName = "**"+realName.substring(2,realName.length());
+			}
+		}
+		return realName;
+	}
 
 }

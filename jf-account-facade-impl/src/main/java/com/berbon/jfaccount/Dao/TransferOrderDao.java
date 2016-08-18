@@ -1,5 +1,6 @@
 package com.berbon.jfaccount.Dao;
 
+import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.util.mapper.BaseMapper;
@@ -12,10 +13,7 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 import java.text.SimpleDateFormat;
 
 /**
@@ -78,7 +76,7 @@ public class TransferOrderDao  {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                 String sql = "INSERT INTO `account_transfer_order`\n" +
-                        "`fromUserCode`,\n" +
+                        "(`fromUserCode`,\n" +
                         "`toUserCode`,\n" +
                         "`amount`,\n" +
                         "`payType`,\n" +
@@ -129,14 +127,14 @@ public class TransferOrderDao  {
                 ps.setString(i++, order.getAttach());
                 ps.setString(i++, order.getReference());
                 if(order.getCreateTime()!=null)
-                    ps.setDate(i++, new Date(order.getCreateTime().getTime()));
+                    ps.setTimestamp(i++, new Timestamp(order.getCreateTime().getTime()));
                 else
-                    ps.setDate(i++, null);
+                    ps.setTimestamp(i++, null);
 
                 if(order.getCreateTime()!=null)
-                    ps.setDate(i++, new Date(order.getExpireTime().getTime()));
+                    ps.setTimestamp(i++, new Timestamp(order.getExpireTime().getTime()));
                 else
-                    ps.setDate(i++, null);
+                    ps.setTimestamp(i++, null);
 
                 ps.setInt(i++, order.getIsUsePwd());
                 ps.setString(i++, order.getChannelId());
@@ -168,6 +166,17 @@ public class TransferOrderDao  {
         return  orderInfo;
     }
 
+    public TransferOrderInfo getByTradeOrderId(String TradeorderNo){
+        String sql = "select * from account_transfer_order where `tradeOrderId`=\""+TradeorderNo+"\"";
+        TransferOrderInfo orderInfo;
+        try{
+            orderInfo  = slaveTemplate.queryForObject(sql,new BaseMapper<TransferOrderInfo>(TransferOrderInfo.class));
+        }catch (Exception e){
+            return  null;
+        }
+        return  orderInfo;
+    }
+
     public PageResult<TransferOrderInfo>  queryTransferOrder(int pageNo,int pageSize, java.util.Date startTime, java.util.Date endTime,String orderId){
 
         PageResult<TransferOrderInfo> result = new PageResult<TransferOrderInfo>();
@@ -186,15 +195,16 @@ public class TransferOrderDao  {
         }else{
 
             if(startTime!=null){
-                sql +=" and createTime >="+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime);
-                countSql +=" and createTime >="+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime);
+                sql +=" and createTime >=\""+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime)+"\"";
+                countSql +=" and createTime >=\""+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime)+"\"";
             }
 
             if(endTime!=null){
-                sql +=" and createTime <="+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime);
-                countSql +=" and createTime <="+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(startTime);
+                sql +=" and createTime <=\""+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(endTime)+"\"";
+                countSql +=" and createTime <=\""+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(endTime)+"\"";
             }
 
+            logger.info("查询转账 countSql"+countSql);
             result.total =  slaveTemplate.queryForObject(countSql, Integer.class);
             result.pageNo = pageNo;
             result.pageSize = pageSize;
@@ -206,6 +216,7 @@ public class TransferOrderDao  {
             }
 
             sql +=" limit "+start+","+pageSize;
+            logger.info("查询转账 sql"+sql);
 
             result.listData = slaveTemplate.query(sql, new BaseMapper<TransferOrderInfo>(TransferOrderInfo.class));
 
@@ -215,7 +226,7 @@ public class TransferOrderDao  {
     }
 
 
-    public int update(final long id, final int state, final String stateDesc,final String tradeOderNo,final int payType){
+    public int update(final long id, final int state, final String stateDesc,final String tradeOderNo,final int payType,final String bindNo){
 
         return slaveTemplate.update(new PreparedStatementCreator() {
             @Override
@@ -228,7 +239,7 @@ public class TransferOrderDao  {
                 ps.setString(i++, tradeOderNo);
                 ps.setInt(i++, state);
                 ps.setString(i++, stateDesc);
-                ps.setDate(i++, new Date(new java.util.Date().getTime()));
+                ps.setTimestamp(i++, new Timestamp(new java.util.Date().getTime()));
                 ps.setInt(i++, payType);
 
                 ps.setLong(i++,id);
@@ -239,5 +250,34 @@ public class TransferOrderDao  {
 
 
     }
+
+
+    public int update(final long id, final int state, final String stateDesc){
+
+        return slaveTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con.prepareStatement("update account_transfer_order set state=?" +
+                        "stateDesc=?,callbackTime=? where id=?");
+
+                int i=1;
+
+
+                ps.setInt(i++, state);
+                ps.setString(i++, stateDesc);
+                ps.setTimestamp(i++, new Timestamp(new java.util.Date().getTime()));
+
+                ps.setLong(i++,id);
+                return ps;
+            }
+        });
+
+    }
+
+
+
+
+
+
 
 }

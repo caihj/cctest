@@ -2,6 +2,7 @@ package com.berbon.jfaccount.impl;
 
 import com.berbon.jfaccount.Dao.ChargeOrderDao;
 import com.berbon.jfaccount.Dao.TransferOrderDao;
+import com.berbon.jfaccount.Dao.WithdrawOrderDao;
 import com.berbon.jfaccount.Service.SignService;
 import com.berbon.jfaccount.comm.ErrorCode;
 import com.berbon.jfaccount.comm.InitBean;
@@ -10,6 +11,7 @@ import com.berbon.jfaccount.facade.mobpojo.*;
 import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
 import com.berbon.jfaccount.facade.pojo.QuickPayValRsp;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
+import com.berbon.jfaccount.facade.pojo.WithdrawOrderInfo;
 import com.berbon.jfaccount.util.Pair;
 import com.berbon.jfaccount.util.UtilTool;
 import com.pay1pay.hsf.common.logger.Logger;
@@ -50,6 +52,11 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
     @Autowired
     private DynamicDubboClient dubboClient;
 
+    @Autowired
+    private SignService signService;
+
+    @Autowired
+    private WithdrawOrderDao withdrawOrderDao;
 
     @Override
     public String echo(String in) {
@@ -106,7 +113,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         ChargeRequest charge = new ChargeRequest();
 
         charge.setPayerUserId(req.getUserId());
-        charge.setAmount((int)orderInfo.getAmount());
+        charge.setAmount((int) orderInfo.getAmount());
         charge.setOrderId(orderInfo.getChargeBussOrderNo());
         charge.setReturnUrl(initBean.frontUrl);
         charge.setNotifyUrl(initBean.backNotifyUrl);
@@ -117,6 +124,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         charge.setSrcChannel("2");
         charge.setBindCardFlag(false);
         charge.setBindNo(req.getBindNo());
+        charge.setChannelId(initBean.channelId);
         String sign = SignService.CalSign(charge, initBean.newPayKey);
 
         charge.setSign(sign);
@@ -129,7 +137,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
             Pair<Integer,String> state = ChargeOrderDao.ChargeCodeToState(response.getResultCode());
 
-            chargeOrderDao.update(orderInfo.getId(),response.getTradeOrderId(),state.first,state.second,cardInfo.getCardType(),req.getBindNo(),orderInfo.getAmount());
+            chargeOrderDao.update(orderInfo.getId(),response.getTradeOrderId(),state.first,state.second,1,cardInfo.getCardType(),req.getBindNo(),orderInfo.getAmount());
 
         }catch (Exception e){
             throw new BusinessException("系统繁忙，请稍后再试");
@@ -285,7 +293,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         try {
             TradeResponse brsp = tradeRpcService.transfer(request);
             TransferOrderDao.OrderState state = TransferOrderDao.GetState(brsp.getResultCode());
-            transferOrderDao.update(orderInfo.getId(),state.state,state.desc,brsp.getTradeOrderId(),1);
+            transferOrderDao.update(orderInfo.getId(),state.state,state.desc,brsp.getTradeOrderId(),1,"");
 
         }catch (Exception e){
             logger.error("发生异常，转账失败!"+e);
@@ -341,18 +349,43 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
 
+
+        WithdrawOrderInfo orderInfo = new WithdrawOrderInfo();
+        orderInfo.setOrderId(UtilTool.generateWithdrawOrderId());
+        orderInfo.setUsercode(req.getUserId());
+        orderInfo.setAmount(req.getAmount());
+        orderInfo.setBindNo(req.getBindNo());
+        //orderInfo.setCardNo();
+        orderInfo.setCreatetime(new Date());
+        orderInfo.setState(WithdrawOrderDao.OrderState.init.state);
+        orderInfo.setStateDesc(WithdrawOrderDao.OrderState.init.desc);
+        orderInfo.setIp(req.getIp());
+
+        orderInfo = withdrawOrderDao.newOrder(orderInfo);
+
+
         WithdrawRequest request = new WithdrawRequest();
 
 
         request.setPayerUserId(req.getUserId());
         request.setWithdrawType(1);
         request.setBindNo(req.getBindNo());
+        request.setOrderId(orderInfo.getOrderId());
+        request.setAmount((int) orderInfo.getAmount());
+        request.setSrcIp(req.getIp());
 
+        request.setSrcChannel("2");
+        request.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreatetime()));
+        request.setChannelId(initBean.channelId);
+        request.setBusinessType(initBean.withdrawBusinessType);
+        request.setSign("MD5");
+        request.setSign(SignService.CalSign(request,initBean.newPayKey));
 
-
-
-        tradeRpcService.withdraw(request);
-
+        try{
+            tradeRpcService.withdraw(request);
+        }catch (Exception e){
+            throw new BusinessException("系统繁忙，请稍后再试"+e);
+        }
 
         return rsp;
     }
@@ -362,28 +395,52 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
 
-        long balance = accountRpcService.queryBalance(userCode, 1);
+        long balance = accountRpcService.queryBalance(userCode, 8);
 
         return balance;
     }
 
     @Override
-    public BalancePayRsp BalancePay(String orderId, String ip) {
+    public BalancePayRsp BalancePay(String orderId,MobOrderType type, String ip) {
+
+
+
+
+
+
+
+
         return null;
     }
 
     @Override
-    public QuickPayRsp quickPay(String orderId, String ip, String bindNo) {
+    public QuickPayRsp quickPay(String orderId,MobOrderType type, String ip, String bindNo) {
+
+
+
         return null;
     }
 
     @Override
-    public void quickPayReGetMsg(String orderId, String ip) {
+    public void quickPayReGetMsg(String orderId,MobOrderType type, String ip) {
+
+
+
 
     }
 
     @Override
-    public void quickPayValMsg(String orderId, String verifyCode, String ip) {
+    public void quickPayValMsg(String orderId, MobOrderType type,String verifyCode, String ip) {
 
+    }
+
+
+    /**
+     * 支付订单
+     */
+    private PayResult payOrder(MobileOrderInfo orderInfo){
+
+        TradeRpcService tradeRpcService = dubboClient.getDubboClient("");
+        return null;
     }
 }

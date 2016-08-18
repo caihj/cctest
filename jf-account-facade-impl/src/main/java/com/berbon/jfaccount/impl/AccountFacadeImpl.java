@@ -9,6 +9,7 @@ import com.berbon.jfaccount.comm.InitBean;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.*;
+import com.berbon.jfaccount.util.Pair;
 import com.berbon.jfaccount.util.UtilTool;
 import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Service;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by chj on 2016/8/5.
@@ -110,29 +113,44 @@ public class AccountFacadeImpl implements AccountFacade {
         request.setVerifyCode(data.getVerifyCode());
         request.setTradeOrderId(data.getTradeOrderId());
         request.setAttach(data.getAttach());
-        //no reference
+
         request.setSrcChannel(data.getSrcChannel());
         request.setReturnUrl(initBean.frontUrl);
         request.setNotifyUrl(initBean.backNotifyUrl);
         request.setOrderTime(orderTime);
         request.setExpireTime(expireTime);
         request.setSignType("MD5");
+        request.setOrderId(orderInfo.getChargeBussOrderNo());
+        request.setSrcIp(data.getIp());
+
 
         String sign = SignService.CalSign(request, initBean.newPayKey);
 
         request.setSign(sign);
 
-        TradeResponse tradeResponse =  tradeRpcService.verifyQuickPay(request);
 
-        QuickPayValRsp rsp =null;
+        QuickPayValRsp rsp = new QuickPayValRsp();
 
-        if(tradeResponse!=null){
-            rsp.setResultCode(tradeResponse.getResultCode());
-            rsp.setResultMsg(tradeResponse.getResultMsg());
-            rsp.setTradeOrderId(tradeResponse.getTradeOrderId());
-            rsp.setPayUrl(tradeResponse.getPayUrl());
-            rsp.setPayParams(tradeResponse.getPayParams());
+        try {
+            TradeResponse tradeResponse = tradeRpcService.verifyQuickPay(request);
+            if(tradeResponse!=null){
+                rsp.setResultCode(tradeResponse.getResultCode());
+                rsp.setResultMsg(tradeResponse.getResultMsg());
+                rsp.setTradeOrderId(tradeResponse.getTradeOrderId());
+                rsp.setPayUrl(tradeResponse.getPayUrl());
+                rsp.setPayParams(tradeResponse.getPayParams());
+                //更新充值结果
+                Pair<Integer,String> state = ChargeOrderDao.ChargeCodeToState(tradeResponse.getResultCode());
+                dao.update(orderInfo.getId(),state.first, state.second);
+
+            }
+        }catch (Exception e ){
+            rsp.setResultCode(ErrorCode.sys_error.code);
+            rsp.setResultMsg(ErrorCode.sys_error.desc);
         }
+
+
+
         return rsp;
     }
 
@@ -181,6 +199,7 @@ public class AccountFacadeImpl implements AccountFacade {
         }
 
 
+        logger.info("转入账户用户信息"+JSONObject.toJSONString(toUser));
 
         if(toUser.getRealname()!=null){
             if(toUser.getRealname().equals(data.getRealName())==false){
@@ -249,7 +268,7 @@ public class AccountFacadeImpl implements AccountFacade {
         charge.setBusinessType(initBean.chargeBusinessType);
         charge.setChannelId(initBean.channelId);
         charge.setSrcIp(req.getIp());
-
+        charge.setSrcChannel("1");
         charge.setAttach(attach);
 
         if(req.getType()==1){
@@ -318,19 +337,29 @@ public class AccountFacadeImpl implements AccountFacade {
         charge.setSign(sign);
 
 
+
+
         try {
-            logger.info("调用支付，报文"+ JSONObject.toJSONString(charge));
+            logger.info("调用支付，报文" + JSONObject.toJSONString(charge));
             TradeResponse response = tradeRpcService.charge(charge);
+
+            logger.info("response+" + JSONObject.toJSONString(response));
+
             rsp.setResultCode(response.getResultCode());
-            rsp.setResultCode(response.getResultMsg());
+            rsp.setResultMsg(response.getResultMsg());
             rsp.setOrderId(orderInfo.getChargeBussOrderNo());
-            rsp.setTradeOrderId(orderInfo.getTradeOrderId());
+            rsp.setTradeOrderId(response.getTradeOrderId());
             //rsp.setPayValue();
             rsp.setAttach(orderInfo.getAttach());
             rsp.setPayUrl(response.getPayUrl());
             rsp.setPayParams(response.getPayParams());
+
+            Pair<Integer,String> state = ChargeOrderDao.ChargeCodeToState(response.getResultCode());
+            dao.update(orderInfo.getId(),response.getTradeOrderId(),state.first,state.second,req.getType(),req.getCardType(),req.getBindNo(),orderInfo.getAmount());
+
         }catch (Exception e){
             logger.error("支付rpc异常" + e);
+            logger.error(e.getMessage());
             e.printStackTrace();
             rsp.setResultCode(ErrorCode.sys_error.code);
             rsp.setResultMsg(ErrorCode.sys_error.desc);
@@ -362,6 +391,10 @@ public class AccountFacadeImpl implements AccountFacade {
             return rsp;
         }
 
+
+        QueryUserInfoService queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
+        UserVO toUser = queryUserInfoService.getUserInfo(req.getToUserCode());
+
         TransferOrderInfo orderInfo = new TransferOrderInfo();
 
         orderInfo.setOrderId(UtilTool.generateTransferOrderId());
@@ -381,6 +414,11 @@ public class AccountFacadeImpl implements AccountFacade {
         orderInfo.setExpireTime(cal.getTime());
 
         orderInfo.setChannelId(initBean.channelId);
+        orderInfo.setBusinessType("2014");
+        orderInfo.setRealName(toUser.getRealname());
+        orderInfo.setReference(req.getReference());
+        orderInfo.setOrderState(TransferOrderDao.OrderState.wait_pay.state);
+        orderInfo.setOrderStateDesc(TransferOrderDao.OrderState.wait_pay.desc);
 
         orderInfo = transferOrderDao.createOrder(orderInfo);
 
@@ -443,6 +481,7 @@ public class AccountFacadeImpl implements AccountFacade {
         request.setChannelId(orderInfo.getChannelId());
         request.setBusinessType("1114");
         request.setSignType("MD5");
+        request.setSrcIp(pay.getIp());
 
         String sign = SignService.CalSign(request, initBean.newPayKey);
         request.setSign(sign);
@@ -455,15 +494,26 @@ public class AccountFacadeImpl implements AccountFacade {
             return rsp;
         }
 
-        TradeResponse resp =  tradeRpcService.transfer(request);
+        try {
+            TradeResponse resp = tradeRpcService.transfer(request);
+            rsp.setTradeOrderId(resp.getTradeOrderId());
+            rsp.setOrderId(orderInfo.getOrderId());
+            rsp.setResultCode(resp.getResultCode());
+            rsp.setResultMsg(resp.getResultMsg());
+            rsp.setAttach(orderInfo.getAttach());
+            rsp.setPayUrl(resp.getPayUrl());
+            rsp.setPayParams(resp.getPayParams());
 
-        rsp.setTradeOrderId(resp.getTradeOrderId());
-        rsp.setOrderId(orderInfo.getOrderId());
-        rsp.setResultCode(resp.getResultCode());
-        rsp.setResultMsg(resp.getResultMsg());
-        rsp.setAttach(orderInfo.getAttach());
-        rsp.setPayUrl(resp.getPayUrl());
-        rsp.setPayParams(resp.getPayParams());
+            //更新转账订单状态
+            TransferOrderDao.OrderState state = TransferOrderDao.GetState(resp.getResultCode());
+            transferOrderDao.update(orderInfo.getId(),state.state,state.desc,resp.getTradeOrderId(), request.getPayType(),pay.getBindNo());
+
+        }catch (Exception e) {
+            rsp.setResultCode(ErrorCode.sys_error.code);
+            rsp.setResultMsg(ErrorCode.sys_error.desc);
+        }
+
+
 
         return rsp;
     }
@@ -540,6 +590,7 @@ public class AccountFacadeImpl implements AccountFacade {
             bindNO =   accountRpcService.bindCard(bindReq);
         }catch (Exception e){
             logger.error("绑卡失败,系统异常"+e);
+            logger.error("msg:"+e.getMessage());
             rsp.setIsOk(false);
             rsp.setMsg("系统繁忙，请稍后再试");
             return rsp;
@@ -569,6 +620,7 @@ public class AccountFacadeImpl implements AccountFacade {
             ret = accountRpcService.verifyBindCard(req.getBindNo(), req.getVerifyCode());
         }catch (Exception e){
             logger.error("发生异常:"+e);
+            logger.error("发生异常:"+e.getMessage());
             ret = false;
         }
 
@@ -600,4 +652,143 @@ public class AccountFacadeImpl implements AccountFacade {
 
         return ret;
     }
+
+    @Override
+    public ValNotifyRsp valFrontNotify(Map<String, String[]> params, NotifyType type) {
+
+        ValNotifyRsp rsp = new ValNotifyRsp();
+
+        Map<String,String > paramMap = new HashMap<>();
+        for(Map.Entry<String, String[]> m:params.entrySet()){
+
+            String value = "";
+            if(m.getValue().length>0){
+                value=m.getValue()[0];
+            }
+            paramMap.put(m.getKey(),value);
+        }
+
+        String sign = SignService.CalSign(paramMap,initBean.newPayKey);
+
+        String f_sign = paramMap.get("sign");
+
+        if(sign.equals(f_sign)==false){
+            logger.error("验签失败");
+            rsp.setCode(ValNotifyRsp.CODE.exception);
+            rsp.setErrorMsg("验签失败");
+            return rsp;
+        }
+
+
+        /**
+         * 所有参数
+         */
+        String outOrderId = paramMap.get("outOrderId");
+        String tradeOrderId = paramMap.get("tradeOrderId");
+        String orderState = paramMap.get("orderState");
+        String orderType = paramMap.get("orderType");
+
+        rsp.setOrderId(outOrderId);
+        rsp.setTradeOrderId(tradeOrderId);
+
+        if(type==NotifyType.charge_notify){
+
+            ChargeOrderInfo orderInfo = dao.getByBusOrderNo(outOrderId);
+            if(orderInfo==null){
+                logger.error("订单未找到");
+                rsp.setCode(ValNotifyRsp.CODE.exception);
+                rsp.setErrorMsg("订单未找到");
+                return rsp;
+            }
+            //更新订单状态
+            int state;
+            String stateDesc;
+
+            switch (orderState){
+                case "1":
+                    state =2;
+                    stateDesc="成功";
+                    rsp.setCode(ValNotifyRsp.CODE.succ);
+                    rsp.setErrorMsg("成功");
+                    break;
+                case "2":
+                    state =3;
+                    stateDesc="失败";
+                    rsp.setCode(ValNotifyRsp.CODE.fail);
+                    rsp.setErrorMsg("失败");
+                    break;
+                case "3":
+                    state = 4;
+                    stateDesc="未知-异常";
+                    rsp.setCode(ValNotifyRsp.CODE.exception);
+                    rsp.setErrorMsg("回调状态异常");
+                    break;
+                default:
+                    state = 4;
+                    stateDesc="未知-通知状态错误";
+                    rsp.setCode(ValNotifyRsp.CODE.exception);
+                    rsp.setErrorMsg("回调状态异常");
+            }
+
+            dao.update(orderInfo.getId(),state,stateDesc);
+            rsp.setAmount(orderInfo.getAmount());
+
+        }else if(type==NotifyType.transfer_notify){
+
+            TransferOrderInfo orderInfo = transferOrderDao.getByOrderId(outOrderId);
+            if(orderInfo==null){
+                logger.error("订单未找到");
+                rsp.setCode(ValNotifyRsp.CODE.exception);
+                rsp.setErrorMsg("订单未找到");
+                return rsp;
+            }
+            //更新订单状态
+            int state;
+            String stateDesc;
+
+            switch (orderState){
+                case "1":
+                    state =2;
+                    stateDesc="成功";
+                    rsp.setCode(ValNotifyRsp.CODE.succ);
+                    rsp.setErrorMsg("成功");
+                    break;
+                case "2":
+                    state =3;
+                    stateDesc="失败";
+                    rsp.setCode(ValNotifyRsp.CODE.fail);
+                    rsp.setErrorMsg("失败");
+                    break;
+                case "3":
+                    state = 4;
+                    stateDesc="未知-异常";
+                    rsp.setCode(ValNotifyRsp.CODE.exception);
+                    rsp.setErrorMsg("回调状态异常");
+                    break;
+                default:
+                    state = 4;
+                    stateDesc="未知-通知状态错误";
+                    rsp.setCode(ValNotifyRsp.CODE.exception);
+                    rsp.setErrorMsg("回调状态异常");
+            }
+
+            transferOrderDao.update(orderInfo.getId(), state, stateDesc);
+            rsp.setAmount(orderInfo.getAmount());
+        }
+
+
+        return rsp;
+    }
+
+    @Override
+    public ChargeOrderInfo queryChargeOrderInfo(String tradeOrderId) {
+        return dao.getByeTradeOrderNo(tradeOrderId);
+    }
+
+    @Override
+    public TransferOrderInfo queryTransferOrderInfo(String tradeOrderId) {
+        return transferOrderDao.getByTradeOrderId(tradeOrderId);
+    }
+
+
 }

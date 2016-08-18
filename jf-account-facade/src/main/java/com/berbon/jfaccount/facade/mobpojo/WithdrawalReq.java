@@ -8,7 +8,7 @@ import java.io.Serializable;
 public class WithdrawalReq implements Serializable {
     private String userId;
     private String bindNo;
-    private String amount;
+    private long amount;
     private String ip;
 
     public String getUserId() {
@@ -27,11 +27,11 @@ public class WithdrawalReq implements Serializable {
         this.bindNo = bindNo;
     }
 
-    public String getAmount() {
+    public long getAmount() {
         return amount;
     }
 
-    public void setAmount(String amount) {
+    public void setAmount(long amount) {
         this.amount = amount;
     }
 

@@ -11,6 +11,15 @@ public class TransferOrderPayReq  implements Serializable{
     private int type;
     private String bindNo;
     private String paypwd;
+    private String ip;
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
 
     public String getOrderId() {
         return orderId;

@@ -13,6 +13,8 @@ public class UtilTool {
 
     public static String ChargeOrderPrefix = "CZ";
     public static String transferOrderPrefix = "ZZ";
+    public static String withdrawOrderPrefix = "TX";
+
 
     private static  String getRandom(int randomNum, int needNum) {
         String result = randomNum + "";
@@ -39,6 +41,10 @@ public class UtilTool {
 
     public static String generateTransferOrderId(){
         return createOrderId(transferOrderPrefix);
+    }
+
+    public static String generateWithdrawOrderId(){
+        return createOrderId(withdrawOrderPrefix);
     }
 
 }

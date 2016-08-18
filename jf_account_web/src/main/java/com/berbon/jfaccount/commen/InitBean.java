@@ -9,13 +9,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class InitBean {
 
-    @Value("frontNotifyUrl")
-    public String frontUrl;
+    @Value("${berbonsessionId}")
+    public String berbonsessionId;
 
-    @Value("bakNotifyUrl")
-    public String bakNotifyUrl;
-
-    @Value("newPayKey")
-    public String newPayKey;
+    @Value("${redictUrl}")
+    public String redictUrl;
 
 }

@@ -13,10 +13,7 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 import java.security.KeyPair;
-import java.sql.Connection;
-import java.sql.Date;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 
 /**
  * Created by chj on 2016/8/5.
@@ -39,7 +36,7 @@ public class ChargeOrderDao {
         Pair<Integer,String> t3 = new Pair<Integer,String>(3,"失败");
         Pair<Integer,String> t4 = new Pair<Integer,String>(4,"未知");
 
-        Pair<Integer,String> [] arr =( Pair<Integer,String>[])(new Object[]{t0,t1,t2,t3,t4});
+        Object [] arr =new Object[]{t0,t1,t2,t3,t4};
 
         int iCode=4;
 
@@ -49,7 +46,7 @@ public class ChargeOrderDao {
 
         }
 
-        return arr[iCode-1];
+        return (Pair)arr[iCode-1];
     }
 
     public ChargeOrderInfo newOrder(final ChargeOrderInfo info){
@@ -92,7 +89,7 @@ public class ChargeOrderDao {
                 PreparedStatement ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
                 int i = 1;
                 ps.setString(i++, info.getChargeBussOrderNo());
-                ps.setDate(i++, new Date(info.getCreateTime().getTime()));
+                ps.setTimestamp(i++, new Timestamp(info.getCreateTime().getTime()));
                 ps.setString(i++, info.getChargeUserCode());
                 ps.setLong(i++, info.getAmount());
                 ps.setInt(i++, info.getChannelId());
@@ -102,9 +99,9 @@ public class ChargeOrderDao {
                 ps.setString(i++, info.getStateDesc());
 
                 if(info.getCallbackTime()!=null)
-                    ps.setDate(i++, new Date(info.getCallbackTime().getTime()));
+                    ps.setTimestamp(i++, new Timestamp(info.getCallbackTime().getTime()));
                 else
-                    ps.setDate(i++, null);
+                    ps.setTimestamp(i++, null);
 
                 ps.setString(i++, info.getTradeOrderId());
 
@@ -156,25 +153,25 @@ public class ChargeOrderDao {
     }
 
 
-    public int update(final long id, final String tradeOderNo, final int state, final String stateDesc, final int cardType
+    public int update(final long id, final String tradeOderNo, final int state, final String stateDesc, final int cardType,final int type
     ,final String bindNo,final long payValue){
 
         return slaveTemplate.update(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement ps = con.prepareStatement("update account_charge_order set tradeOrderId=?,state=?" +
+                PreparedStatement ps = con.prepareStatement("update account_charge_order set tradeOrderId=?,state=?," +
                         "stateDesc=?,callbackTime=?,payValue=?,bindNo=?,type=?,cardType=? where id=?");
 
 
                 int i=1;
-                ps.setString(i++,tradeOderNo);
+                ps.setString(i++, tradeOderNo);
                 ps.setInt(i++, state);
                 ps.setString(i++, stateDesc);
-                ps.setDate(i++, new Date(new java.util.Date().getTime()));
+                ps.setTimestamp(i++, new Timestamp(new java.util.Date().getTime()));
 
                 ps.setLong(i++,payValue);
                 ps.setString(i++,bindNo);
-                ps.setInt(i++, 1);
+                ps.setInt(i++, type);
                 ps.setInt(i++, cardType);
 
 
@@ -185,4 +182,23 @@ public class ChargeOrderDao {
         });
     }
 
+    public int update(final long id, final int state, final String stateDesc) {
+
+        return slaveTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con.prepareStatement("update account_charge_order set state=?," +
+                        "stateDesc=?,callbackTime=? where id=?");
+
+                int i=1;
+                ps.setInt(i++, state);
+                ps.setString(i++, stateDesc);
+                ps.setTimestamp(i++, new Timestamp(new java.util.Date().getTime()));
+
+                ps.setLong(i++,id);
+
+                return ps;
+            }
+        });
+    }
 }

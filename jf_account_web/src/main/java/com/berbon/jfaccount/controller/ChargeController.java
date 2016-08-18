@@ -132,6 +132,7 @@ public class ChargeController {
         req.setVerifyCode(request.getParameter("verifyCode"));
         req.setTradeOrderId(request.getParameter("tradeOrderId"));
         req.setSrcChannel("1");
+        req.setIp(IpTool.getIp(request));
 
         if(StringUtil.isNull(req.getVerifyCode(),req.getTradeOrderId())){
             logger.error("参数错误");

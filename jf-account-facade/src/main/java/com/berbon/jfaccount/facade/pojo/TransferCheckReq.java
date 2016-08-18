@@ -25,9 +25,7 @@ public class TransferCheckReq implements Serializable {
         if(toUserCode==null ||toUserCode.isEmpty()){
             return false;
         }
-        if(realName==null ||realName.isEmpty()){
-            return false;
-        }
+
         return true;
     }
 
