@@ -37,7 +37,6 @@ import java.util.Map;
 public class AccountFacadeImpl implements AccountFacade {
 
 
-
     private static Logger logger = LoggerFactory.getLogger(AccountFacadeImpl.class);
 
     @Autowired
@@ -83,6 +82,7 @@ public class AccountFacadeImpl implements AccountFacade {
         info.setRealName(data.getRealName());
         info.setIdentityNo(data.getIdentityNo());
         info.setMobileNo(data.getMobileNo());
+        info.setFromIp(data.getIp());
 
 
         info = dao.newOrder(info);
@@ -133,6 +133,7 @@ public class AccountFacadeImpl implements AccountFacade {
 
         try {
             TradeResponse tradeResponse = tradeRpcService.verifyQuickPay(request);
+            logger.info("短信验证结果:"+JSONObject.toJSONString(tradeResponse));
             if(tradeResponse!=null){
                 rsp.setResultCode(tradeResponse.getResultCode());
                 rsp.setResultMsg(tradeResponse.getResultMsg());
@@ -272,11 +273,13 @@ public class AccountFacadeImpl implements AccountFacade {
         charge.setAttach(attach);
 
         if(req.getType()==1){
+            logger.info("已有卡支付");
             //已有卡支付
             charge.setSrcChannel("1");
             charge.setBindCardFlag(false);
             charge.setBindNo(req.getBindNo());
         }else  if(req.getType()==2 ) {
+            logger.info("绑卡并支付");
             //绑卡并支付
             charge.setBindCardFlag(true);
             if((req.getCardType()!=1 && req.getCardType()!=2)){
@@ -294,9 +297,11 @@ public class AccountFacadeImpl implements AccountFacade {
             }
 
             if (uservo.getIsAuth() == 1) {
+                logger.info("设置用户信息");
                 //已实名
                 charge.setRealName(uservo.getRealname());
                 charge.setIdentityNo(uservo.getIdentityid());
+
             } else {
                 //未实名
                 if (StringUtil.isNotNull(req.getRealName(), req.getIdentityNo(), req.getMobileNo())) {
@@ -782,12 +787,22 @@ public class AccountFacadeImpl implements AccountFacade {
 
     @Override
     public ChargeOrderInfo queryChargeOrderInfo(String tradeOrderId) {
-        return dao.getByeTradeOrderNo(tradeOrderId);
+
+        try{
+             return    dao.getByeTradeOrderNo(tradeOrderId);
+        }catch (Exception e){
+            return null;
+        }
     }
 
     @Override
     public TransferOrderInfo queryTransferOrderInfo(String tradeOrderId) {
-        return transferOrderDao.getByTradeOrderId(tradeOrderId);
+
+       try{
+           return transferOrderDao.getByTradeOrderId(tradeOrderId);
+       }catch (Exception e){
+           return null;
+       }
     }
 
 

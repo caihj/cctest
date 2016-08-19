@@ -64,20 +64,17 @@ public class SignService {
 
     public boolean checkUserPayPasswd(String userCode,String payPwd){
 
-        logger.info("检验支付密码"+userCode+"|"+payPwd);
+        logger.info("检验支付密码"+userCode);
 
         QueryPayUserInfoService queryPayUserInfoService = dubboClient.getDubboClient("queryPayUserInfoService");
         UserBaseInfoVO vo = queryPayUserInfoService.getUser(userCode);
         String salt = vo.getSalt();
-        logger.info("salt:"+salt);
         String encPwd= DigestUtils.md5Hex(payPwd+salt);
-        logger.info("encPwd:"+encPwd);
-        logger.info("encPwd:"+vo.getPayPassword());
         try {
             queryPayUserInfoService.checkPayPwd(userCode, encPwd, null, 1);
         }catch (Exception e){
-            logger.error("密码可能错误"+e);
-            return true;
+            logger.error("密码错误"+e);
+            return false;
         }
 
         return  true;

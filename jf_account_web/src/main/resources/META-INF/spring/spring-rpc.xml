@@ -18,7 +18,9 @@
     	<property name="isDefault" value="${dubbo.isDefault}" />
     </bean>
 	
-	<bean id="dynamicDubboClient" class="com.sztx.se.rpc.dubbo.source.DynamicDubboClient" />
+	<bean id="dynamicDubboClient" class="com.sztx.se.rpc.dubbo.source.DynamicDubboClient" >
+		<property name="openLog" value="true"/>
+	</bean>
 
 	<bean id="dynamicCreateDubboConsumerManager" class="com.sztx.se.rpc.dubbo.source.DynamicCreateDubboClientManager">
 		<property name="dynamicDubboClient" ref="dynamicDubboClient" />

@@ -48,6 +48,16 @@ public class InitBean implements InitializingBean {
     public int maxChargeOrderAliveSec;
 
 
+    /**
+     * 话费充值 支付通知 merId
+     */
+    public String mobileChargeMerId;
+
+    /**
+     * 话费充值 支付通知 merId
+     */
+    public String mobileChargeSignKey;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         maxChargeOrderAliveSec = Integer.parseInt(__maxChargeOrderAliveSec);

@@ -184,6 +184,12 @@
 	<logger name="jdbc.audit" level="OFF" />
 	<logger name="jdbc.connection" level="OFF" />
 	<logger name="jdbc.resultset" level="OFF" />
+
+	<logger name="com.sztx.se" level="INFO">
+		<appender-ref ref="console" />
+		<appender-ref ref="file" />
+	</logger>
+
 	<root level="INFO">
 		<appender-ref ref="console" />
 		<appender-ref ref="file" />

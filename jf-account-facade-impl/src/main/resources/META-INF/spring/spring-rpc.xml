@@ -16,12 +16,16 @@
     	<property name="registryUsername" value="${dubbo.username}" />
     	<property name="registryPassword" value="${dubbo.password}" />
     	<property name="isDefault" value="${dubbo.isDefault}" />
+
     </bean>
 
-	<bean id="dynamicDubboClient" class="com.sztx.se.rpc.dubbo.source.DynamicDubboClient" />
+	<bean id="dynamicDubboClient" class="com.sztx.se.rpc.dubbo.source.DynamicDubboClient" >
+		<property name="openLog" value="true"/>
+	</bean>
 
 	<bean id="dynamicCreateDubboConsumerManager" class="com.sztx.se.rpc.dubbo.source.DynamicCreateDubboClientManager">
 		<property name="dynamicDubboClient" ref="dynamicDubboClient" />
+
 	</bean>
 
 	<import resource="spring-rpc-provider.xml" />

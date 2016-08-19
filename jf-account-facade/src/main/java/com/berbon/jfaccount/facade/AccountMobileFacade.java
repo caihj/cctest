@@ -72,22 +72,22 @@ public interface AccountMobileFacade {
     /**
      * 余额支付-缴费订单
      */
-    BalancePayRsp BalancePay(String orderId,MobOrderType type,String ip);
+    BalancePayRsp BalancePay(String userCode,String orderId,MobOrderType type,String ip);
 
     /**
      * 快捷支付-缴费订单
      */
 
-    QuickPayRsp quickPay(String orderId,MobOrderType type,String ip,String bindNo);
+    QuickPayRsp quickPay(String userCode,String orderId,MobOrderType type,String ip,String bindNo);
 
     /**
      * 快捷支付-重新获取验证码
      */
-    void quickPayReGetMsg(String orderId,MobOrderType type,String ip);
+    void quickPayReGetMsg(String userCode,String orderId,MobOrderType type,String ip);
 
     /**
      * 快捷支付-验证验证码
      */
-    void quickPayValMsg(String orderId,MobOrderType type,String verifyCode,String ip);
+    void quickPayValMsg(String userCode,String orderId,MobOrderType type,String verifyCode,String ip);
 
 }

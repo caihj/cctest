@@ -1,9 +1,9 @@
 package com.berbon.jfaccount.impl;
 
-import com.berbon.jfaccount.Dao.ChargeOrderDao;
-import com.berbon.jfaccount.Dao.TransferOrderDao;
-import com.berbon.jfaccount.Dao.WithdrawOrderDao;
+import com.berbon.jfaccount.Dao.*;
+import com.berbon.jfaccount.Service.PayNotifyService;
 import com.berbon.jfaccount.Service.SignService;
+import com.berbon.jfaccount.comm.BusinessType;
 import com.berbon.jfaccount.comm.ErrorCode;
 import com.berbon.jfaccount.comm.InitBean;
 import com.berbon.jfaccount.facade.AccountMobileFacade;
@@ -12,6 +12,10 @@ import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
 import com.berbon.jfaccount.facade.pojo.QuickPayValRsp;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.jfaccount.facade.pojo.WithdrawOrderInfo;
+import com.berbon.jfaccount.pojo.GameChargeOrderInfo;
+import com.berbon.jfaccount.pojo.MobieChargeOrderInfo;
+import com.berbon.jfaccount.pojo.MobileOrderInfo;
+import com.berbon.jfaccount.pojo.PayNotifyData;
 import com.berbon.jfaccount.util.Pair;
 import com.berbon.jfaccount.util.UtilTool;
 import com.pay1pay.hsf.common.logger.Logger;
@@ -56,7 +60,16 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
     private SignService signService;
 
     @Autowired
+    private PayNotifyService payNotifyService;
+
+    @Autowired
     private WithdrawOrderDao withdrawOrderDao;
+
+    @Autowired
+    private BusChargeOrderDao mobileDao;
+
+    @Autowired
+    private GameChargeOrderDao gameDao;
 
     @Override
     public String echo(String in) {
@@ -296,7 +309,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             transferOrderDao.update(orderInfo.getId(),state.state,state.desc,brsp.getTradeOrderId(),1,"");
 
         }catch (Exception e){
-            logger.error("发生异常，转账失败!"+e);
+            logger.error("发生异常，转账失败!");
         }
 
 
@@ -384,7 +397,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         try{
             tradeRpcService.withdraw(request);
         }catch (Exception e){
-            throw new BusinessException("系统繁忙，请稍后再试"+e);
+            throw new BusinessException("系统繁忙，请稍后再试");
         }
 
         return rsp;
@@ -401,36 +414,178 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
     }
 
     @Override
-    public BalancePayRsp BalancePay(String orderId,MobOrderType type, String ip) {
+    public BalancePayRsp BalancePay(String userCode,String orderId,MobOrderType type, String ip) {
+
+        MobileOrderInfo payorder = queryPayOrder(userCode, orderId, type);
+        PayResult result = payOrder(payorder);
 
 
+        //支付成功
+        PayNotifyData data = new PayNotifyData();
+
+        data.orderId = payorder.getOrderId();
+        data.payAmount = result.payValue;
+        data.payTime  = new Date();
+        data.payOrderId = result.payOrderId;
+
+        switch (payorder.getOrderType()){
+            case  mobile_charge:
+                payNotifyService.mobileChargeNotify(data);
+                break;
+            case game_charge:
+                payNotifyService.gameChargeNotify(data);
+                break;
+        }
+        return new BalancePayRsp();
+    }
+
+    private MobileOrderInfo  queryPayOrder(String userCode,String orderId,MobOrderType type){
+
+        MobileOrderInfo payorder = new MobileOrderInfo();
+        payorder.setUserCode(userCode);
+        payorder.setOrderId(orderId);
+        payorder.setPayType(MobileOrderInfo.PayType.balance_pay);
+        payorder.setOrderType(type);
 
 
+        if(type == MobOrderType.mobile_charge){
+            MobieChargeOrderInfo order = mobileDao.queryOrder(orderId);
+            if(order==null){
+                throw new BusinessException("未找到订单");
+            }
+            //判断订单状态
+            if(order.getCharge_result()==0){
 
+                logger.info("支付话费充值订单:"+orderId);
 
+                payorder.setDownOrderTime(order.getAdd_time());
+                payorder.setAmount(order.getPrice());
+                payorder.setTradeType(BusinessType.type_2002);
+                payorder.setGoodsName("话费充值");
+                payorder.setGoodsDetail("话费充值"+order.getMob());
 
+            }else {
+                throw new BusinessException("订单状态错误，不能支付");
+            }
+        }else if(type == MobOrderType.game_charge ){
+            GameChargeOrderInfo order = gameDao.queryOrder(orderId);
+            if(order==null){
+                throw new BusinessException("未找到订单");
+            }
 
-        return null;
+            //判断订单状态
+            if(order.getStatus()==0){
+
+                logger.info("支付游戏充值订单:" + orderId);
+
+                payorder.setDownOrderTime(new Date(order.getOrderCreateTime()));
+                payorder.setAmount(order.getTotalMoney());
+                payorder.setTradeType(BusinessType.type_2002);
+                payorder.setGoodsName("游戏充值");
+                payorder.setGoodsDetail("游戏充值");
+
+            }else{
+                throw new BusinessException("订单状态错误，不能支付");
+            }
+        }
+        return payorder;
     }
 
     @Override
-    public QuickPayRsp quickPay(String orderId,MobOrderType type, String ip, String bindNo) {
+    public QuickPayRsp quickPay(String userCode,String orderId,MobOrderType type, String ip, String bindNo) {
 
+        MobileOrderInfo payorder = queryPayOrder(userCode, orderId, type);
+        payorder.setPayType(MobileOrderInfo.PayType.bind_quick_pay);
+        payorder.setBindNo(bindNo);
+        //查询bindno
 
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+        BindCardInfo cardinfo = accountRpcService.findCardInfoByBindNo(bindNo);
+        if(cardinfo==null || cardinfo.getUserId().equals(userCode)==false){
+            throw new BusinessException("银行卡信息错误，支付失败");
+        }
 
-        return null;
+        payorder.setBankId(cardinfo.getBankId());
+        PayResult result = payOrder(payorder);
+        if(result.result!= PayResult.Result.paying){
+            throw new BusinessException("支付状态异常");
+        }
+
+        return new QuickPayRsp();
     }
 
     @Override
-    public void quickPayReGetMsg(String orderId,MobOrderType type, String ip) {
+    public void quickPayReGetMsg(String userCode,String orderId,MobOrderType type, String ip) {
 
+        TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
+        if(tradeRpcService==null){
+            logger.error("系统错误,获取TradeRpcService 失败");
+        }
+
+        if(type == MobOrderType.mobile_charge) {
+            MobieChargeOrderInfo order = mobileDao.queryOrder(orderId);
+            if (order == null) {
+                throw new BusinessException("未找到订单");
+            }
+        }else if(type==MobOrderType.game_charge){
+            GameChargeOrderInfo order = gameDao.queryOrder(orderId);
+            if(order==null){
+                throw new BusinessException("未找到订单");
+            }
+        }
+
+
+        SimpleDateFormat d = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//        String orderTime = d.format(orderInfo.getCreateTime());
+//        String expireTime = null;
+//
+//        VerifyQuickPayRequest request =  new VerifyQuickPayRequest();
+//
+//        request.setVerifyCode(data.getVerifyCode());
+//        request.setTradeOrderId(data.getTradeOrderId());
+//        request.setAttach(data.getAttach());
+//
+//        request.setSrcChannel(data.getSrcChannel());
+//        request.setReturnUrl(initBean.frontUrl);
+//        request.setNotifyUrl(initBean.backNotifyUrl);
+//        request.setOrderTime(orderTime);
+//        request.setExpireTime(expireTime);
+//        request.setSignType("MD5");
+//        request.setOrderId(orderInfo.getChargeBussOrderNo());
+//        request.setSrcIp(ip);
+
+//
+//        String sign = SignService.CalSign(request, initBean.newPayKey);
+//
+//        request.setSign(sign);
+
+//
+//        QuickPayValRsp rsp = new QuickPayValRsp();
+//
+//        try {
+//            TradeResponse tradeResponse = tradeRpcService.verifyQuickPay(request);
+//            if(tradeResponse!=null){
+//                rsp.setResultCode(tradeResponse.getResultCode());
+//                rsp.setResultMsg(tradeResponse.getResultMsg());
+//                rsp.setTradeOrderId(tradeResponse.getTradeOrderId());
+//                rsp.setPayUrl(tradeResponse.getPayUrl());
+//                rsp.setPayParams(tradeResponse.getPayParams());
+//                //更新充值结果
+//                Pair<Integer,String> state = ChargeOrderDao.ChargeCodeToState(tradeResponse.getResultCode());
+//                //dao.update(orderInfo.getId(),state.first, state.second);
+//
+//            }
+//        }catch (Exception e ){
+//            rsp.setResultCode(ErrorCode.sys_error.code);
+//            rsp.setResultMsg(ErrorCode.sys_error.desc);
+//        }
 
 
 
     }
 
     @Override
-    public void quickPayValMsg(String orderId, MobOrderType type,String verifyCode, String ip) {
+    public void quickPayValMsg(String userCode,String orderId, MobOrderType type,String verifyCode, String ip) {
 
     }
 
@@ -439,8 +594,67 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
      * 支付订单
      */
     private PayResult payOrder(MobileOrderInfo orderInfo){
+        TradeRpcService tradeRpcService =null;
+        try{
+            tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
+        }catch (Exception e){
+            throw new BusinessException("系统繁忙，请稍后再试");
+        }
 
-        TradeRpcService tradeRpcService = dubboClient.getDubboClient("");
-        return null;
+        B2CRequest payReq = new B2CRequest();
+        payReq.setOrderId(orderInfo.getOrderId());
+        payReq.setPayerUserId(orderInfo.getUserCode());
+
+        if(orderInfo.getPayType()== MobileOrderInfo.PayType.bind_quick_pay){
+            payReq.setBindNo(orderInfo.getBindNo());
+            payReq.setBankId(orderInfo.getBankId());
+        }
+
+        payReq.setAmount((int) orderInfo.getAmount());
+        payReq.setGoodsName(orderInfo.getGoodsName());
+        payReq.setGoodsDetail(orderInfo.getGoodsDetail());
+
+        //担保交易(0及时交易，1担保交易)
+        payReq.setGuaranteeType(0);
+        payReq.setSrcIp(orderInfo.getFromIp());
+        //来源渠道 1网站，2手机，3微信,4内部
+        payReq.setSrcChannel("2");
+
+        payReq.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getDownOrderTime()));
+
+        payReq.setIsUsePwd("1");
+        payReq.setChannelId(initBean.channelId);
+        payReq.setBusinessType(orderInfo.getTradeType().type + "");
+        payReq.setProductType(2);
+
+        payReq.setSign("MD5");
+        String sign = SignService.CalSign(payReq,initBean.newPayKey);
+        payReq.setSign(sign);
+
+        try{
+            TradeResponse response = tradeRpcService.b2c(payReq);
+            switch (response.getResultCode()){
+                case "3":return new PayResult(PayResult.Result.succ,response.getTradeOrderId(),payReq.getAmount());
+                case "2":
+                case "1":
+                    return new PayResult(PayResult.Result.paying,response.getTradeOrderId(),payReq.getAmount());
+                case "4":
+                    return new PayResult(PayResult.Result.fail,response.getTradeOrderId(),0);
+                case "5":
+                    return new PayResult(PayResult.Result.exception,null,0);
+                default:
+                    return new PayResult(PayResult.Result.unknow,null,0);
+            }
+
+        }
+        catch (BusinessException e){
+            logger.error("支付异常"+e);
+            return new PayResult(PayResult.Result.exception,null,0);
+        }
+        catch (Exception e){
+            logger.error("支付异常 异常未知"+e);
+            return new PayResult(PayResult.Result.exception,null,0);
+        }
+
     }
 }

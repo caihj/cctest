@@ -17,6 +17,7 @@
 		<property name="interfaceName" value="com.sztx.usercenter.rpc.api.service.QueryUserInfoService" />
     	<property name="protocol" value="dubbo" />
     	<property name="isCheck" value="false" />
+
 	</bean>
 
 	<bean id="accountRpcService" class="com.sztx.se.rpc.dubbo.client.DubboClient">

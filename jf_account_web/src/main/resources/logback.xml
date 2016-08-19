@@ -127,6 +127,11 @@
 	
 	<logger name="org.springframework.data.redis" level="INFO"/>
 
+	<logger name="com.sztx.se" level="INFO">
+		<appender-ref ref="console" />
+		<appender-ref ref="file" />
+	</logger>
+
 	<root level="INFO">
 		<appender-ref ref="console" />
 		<appender-ref ref="file" />

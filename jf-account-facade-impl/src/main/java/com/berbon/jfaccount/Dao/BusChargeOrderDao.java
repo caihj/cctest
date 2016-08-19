@@ -1,6 +1,7 @@
 package com.berbon.jfaccount.Dao;
 
 import com.berbon.jfaccount.pojo.MobieChargeOrderInfo;
+import com.berbon.util.mapper.BaseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -18,13 +19,10 @@ public class BusChargeOrderDao  {
     @Autowired
     private JdbcTemplate slaveTemplate;
 
-    private MobieChargeOrderInfo DaoqueryOrder(String orderId){
+    public MobieChargeOrderInfo queryOrder(String orderId){
 
         String sql = "select * from charge_order where order_sn=\""+ orderId+"\"";
+        return slaveTemplate.queryForObject(sql, new BaseMapper<MobieChargeOrderInfo>(MobieChargeOrderInfo.class));
 
-
-
-
-        return null;
     }
 }

@@ -43,7 +43,7 @@ public class ChargeOrderDao {
         try {
             iCode = Integer.parseInt(code);
         }catch (Exception e){
-
+            logger.error("发生异常，未识别的订单号+"+code);
         }
 
         return (Pair)arr[iCode-1];

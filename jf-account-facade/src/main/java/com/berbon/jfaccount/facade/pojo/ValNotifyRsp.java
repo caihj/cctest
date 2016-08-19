@@ -1,9 +1,11 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
+
 /**
  * Created by chj on 2016/8/18.
  */
-public class ValNotifyRsp {
+public class ValNotifyRsp implements Serializable {
 
     public static enum CODE{
         succ,

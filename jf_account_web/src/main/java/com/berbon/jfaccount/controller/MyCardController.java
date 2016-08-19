@@ -148,7 +148,7 @@ public class MyCardController {
 
         JsonResult result  = new JsonResult();
         String bindNo = request.getParameter("bindNo");
-        String payPasswd = request.getParameter("payPasswd");
+        String payPasswd = request.getParameter("payPwd");
 
         if(bindNo==null ||bindNo.trim().isEmpty() || payPasswd==null ||payPasswd.trim().isEmpty()){
             result.setResult(ResultAck.para_error);

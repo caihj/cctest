@@ -312,18 +312,22 @@ public class AccountController {
         try {
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
             List<BindCardInfo> cards = accountRpcService.queryBindCardList(user.getUserCode(), bindTypeI);
-            for(BindCardInfo card:cards){
-                String cardNo = card.getCardNo();
-                if(card.getCardType()==1 || card.getCardType()==2){
-                    cardNo = "****"+cardNo.substring(cardNo.length()-4,cardNo.length());
-                }else {
-                    int start = cardNo.length()-4;
-                    if(start<0){
-                        start = 0;
+            if(cards!=null){
+                for(BindCardInfo card:cards){
+                    String cardNo = card.getCardNo();
+                    if(card.getCardType()==1 || card.getCardType()==2){
+                        cardNo = "****"+cardNo.substring(cardNo.length()-4,cardNo.length());
+                    }else {
+                        int start = cardNo.length()-4;
+                        if(start<0){
+                            start = 0;
+                        }
+                        cardNo = "****"+cardNo.substring(start,cardNo.length());
                     }
-                    cardNo = "****"+cardNo.substring(start,cardNo.length());
+                    card.setCardNo(cardNo);
                 }
-                card.setCardNo(cardNo);
+            }else{
+                cards = new ArrayList<>();
             }
             result.setResult(ResultAck.succ.getCode());
             result.setRetinfo(ResultAck.succ.getDesc());
@@ -579,21 +583,26 @@ public class AccountController {
             //json.put("outAmount", records.getOutAmount());
             json.put("pageNo", pageNo);
             json.put("pageSize", pageSize);
-            json.put("total", records.getTotal());
+            if(records!=null){
+                json.put("total", records.getTotal());
+            }else{
+                json.put("total", 0);
+            }
+
 
             List<CashRecord> f_records = new ArrayList<>();
-            for(UserActFlowResponse.UserActFlow t :records.getUserActFlowS()){
-                CashRecord record = new CashRecord();
-                record.setPayDate(t.getTradeTime());
-                record.setTradeOrderNo(t.getTradeOrderNo());
-                record.setTradeOrderType(t.getTradeType());
+            if(records.getUserActFlowS()!=null) {
+                for (UserActFlowResponse.UserActFlow t : records.getUserActFlowS()) {
+                    CashRecord record = new CashRecord();
+                    record.setPayDate(t.getTradeTime());
+                    record.setTradeOrderNo(t.getTradeOrderNo());
+                    record.setTradeOrderType(t.getTradeType());
 
-                String otherAccount="";
-                String intOrOut="";
+                    String otherAccount = "";
+                    String intOrOut = "";
 
 
-
-                //t.get
+                    //t.get
 
 //                if(t.getUserId().equals(user.getUserCode())){
 //                    otherAccount = t.getPayerUserId();
@@ -602,19 +611,20 @@ public class AccountController {
 //                    otherAccount = t.getPayeeUserId();
 //                }
 
-                record.setOtherAccount(otherAccount);
+                    record.setOtherAccount(otherAccount);
 
-                record.setAmount((Math.abs(t.getTranAmount()) + 0.0f) / 100.0 + "");
-                record.setBalance((t.getActBalance()+0.0f) / 100.0 + "");
+                    record.setAmount((Math.abs(t.getTranAmount()) + 0.0f) / 100.0 + "");
+                    record.setBalance((t.getActBalance() + 0.0f) / 100.0 + "");
 
 
-                if(t.getTranAmount()<0){
-                    intOrOut = "out";
-                }else {
-                    intOrOut = "in";
+                    if (t.getTranAmount() < 0) {
+                        intOrOut = "out";
+                    } else {
+                        intOrOut = "in";
+                    }
+                    record.setType(intOrOut);
+                    f_records.add(record);
                 }
-                record.setType(intOrOut);
-                f_records.add(record);
             }
 
             json.put("payFlows",f_records);
