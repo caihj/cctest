@@ -1,6 +1,7 @@
 package com.berbon.jfaccount.impl;
 
 import com.berbon.jfaccount.Dao.*;
+import com.berbon.jfaccount.Service.OrderCacheService;
 import com.berbon.jfaccount.Service.PayNotifyService;
 import com.berbon.jfaccount.Service.SignService;
 import com.berbon.jfaccount.comm.BusinessType;
@@ -70,6 +71,9 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
     @Autowired
     private GameChargeOrderDao gameDao;
+
+    @Autowired
+    private OrderCacheService cacheService;
 
     @Override
     public String echo(String in) {
@@ -478,12 +482,11 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
                 logger.info("支付游戏充值订单:" + orderId);
 
-                payorder.setDownOrderTime(new Date(order.getOrderCreateTime()));
+                payorder.setDownOrderTime(new Date(order.getOrderCreateTime()*1000));
                 payorder.setAmount(order.getTotalMoney());
                 payorder.setTradeType(BusinessType.type_2002);
                 payorder.setGoodsName("游戏充值");
                 payorder.setGoodsDetail("游戏充值");
-
             }else{
                 throw new BusinessException("订单状态错误，不能支付");
             }
@@ -522,71 +525,142 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             logger.error("系统错误,获取TradeRpcService 失败");
         }
 
+        Date createTime = null;
+        String bussOrderNo = null;
+
         if(type == MobOrderType.mobile_charge) {
             MobieChargeOrderInfo order = mobileDao.queryOrder(orderId);
             if (order == null) {
                 throw new BusinessException("未找到订单");
             }
+
+            if(order.getCharge_result()!=0){
+                throw new BusinessException("订单状态错误，不能支付");
+            }
+
+            createTime = order.getAdd_time();
+            bussOrderNo = orderId;
+
         }else if(type==MobOrderType.game_charge){
             GameChargeOrderInfo order = gameDao.queryOrder(orderId);
             if(order==null){
                 throw new BusinessException("未找到订单");
             }
+
+            if(order.getStatus()!=0){
+                throw new BusinessException("订单状态错误，不能支付");
+            }
+
+            createTime = new Date(order.getOrderCreateTime()*1000);
+            bussOrderNo = orderId;
+
         }
 
-
         SimpleDateFormat d = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//        String orderTime = d.format(orderInfo.getCreateTime());
-//        String expireTime = null;
-//
-//        VerifyQuickPayRequest request =  new VerifyQuickPayRequest();
-//
-//        request.setVerifyCode(data.getVerifyCode());
-//        request.setTradeOrderId(data.getTradeOrderId());
-//        request.setAttach(data.getAttach());
-//
-//        request.setSrcChannel(data.getSrcChannel());
-//        request.setReturnUrl(initBean.frontUrl);
-//        request.setNotifyUrl(initBean.backNotifyUrl);
-//        request.setOrderTime(orderTime);
-//        request.setExpireTime(expireTime);
-//        request.setSignType("MD5");
-//        request.setOrderId(orderInfo.getChargeBussOrderNo());
-//        request.setSrcIp(ip);
+        String orderTime = d.format(createTime);
+        String expireTime = null;
 
-//
-//        String sign = SignService.CalSign(request, initBean.newPayKey);
-//
-//        request.setSign(sign);
+        ResendQuickVCRequest  request =  new ResendQuickVCRequest();
 
-//
-//        QuickPayValRsp rsp = new QuickPayValRsp();
-//
-//        try {
-//            TradeResponse tradeResponse = tradeRpcService.verifyQuickPay(request);
-//            if(tradeResponse!=null){
-//                rsp.setResultCode(tradeResponse.getResultCode());
-//                rsp.setResultMsg(tradeResponse.getResultMsg());
-//                rsp.setTradeOrderId(tradeResponse.getTradeOrderId());
-//                rsp.setPayUrl(tradeResponse.getPayUrl());
-//                rsp.setPayParams(tradeResponse.getPayParams());
-//                //更新充值结果
-//                Pair<Integer,String> state = ChargeOrderDao.ChargeCodeToState(tradeResponse.getResultCode());
-//                //dao.update(orderInfo.getId(),state.first, state.second);
-//
-//            }
-//        }catch (Exception e ){
-//            rsp.setResultCode(ErrorCode.sys_error.code);
-//            rsp.setResultMsg(ErrorCode.sys_error.desc);
-//        }
+        request.setOrderId(bussOrderNo);
+        String tradeOrderId = cacheService.getTradeOrderId(orderId,type);
+        if(tradeOrderId==null){
+            throw  new BusinessException("支付超时!");
+        }
+        request.setTradeOrderId(tradeOrderId);
 
+        request.setSrcChannel("2");
+        request.setReturnUrl(initBean.frontUrl);
+        request.setNotifyUrl(initBean.backNotifyUrl);
+        request.setOrderTime(orderTime);
+        request.setExpireTime(expireTime);
+        request.setSignType("MD5");
+        request.setSrcIp(ip);
 
+        String sign = SignService.CalSign(request, initBean.newPayKey);
+
+        request.setSign(sign);
 
     }
 
     @Override
-    public void quickPayValMsg(String userCode,String orderId, MobOrderType type,String verifyCode, String ip) {
+    public boolean quickPayValMsg(String userCode,String orderId, MobOrderType type,String verifyCode, String ip) {
 
+        TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
+        if(tradeRpcService==null){
+            logger.error("系统错误,获取TradeRpcService 失败");
+        }
+
+        Date createTime = null;
+        String bussOrderNo = null;
+
+        if(type == MobOrderType.mobile_charge) {
+            MobieChargeOrderInfo order = mobileDao.queryOrder(orderId);
+            if (order == null) {
+                throw new BusinessException("未找到订单");
+            }
+
+            if(order.getCharge_result()!=0){
+                throw new BusinessException("订单状态错误，不能支付");
+            }
+
+            createTime = order.getAdd_time();
+            bussOrderNo = orderId;
+
+        }else if(type==MobOrderType.game_charge){
+            GameChargeOrderInfo order = gameDao.queryOrder(orderId);
+            if(order==null){
+                throw new BusinessException("未找到订单");
+            }
+
+            if(order.getStatus()!=0){
+                throw new BusinessException("订单状态错误，不能支付");
+            }
+
+            createTime = new Date(order.getOrderCreateTime()*1000);
+            bussOrderNo = orderId;
+        }
+
+
+        VerifyQuickPayRequest request = new VerifyQuickPayRequest();
+
+
+        request.setVerifyCode(verifyCode);
+        String tradeOrderId = cacheService.getTradeOrderId(orderId,type);
+        if(tradeOrderId==null){
+            throw  new BusinessException("支付超时!");
+        }
+
+        request.setTradeOrderId(tradeOrderId);
+        request.setSrcIp(ip);
+        request.setSrcChannel("2");
+        request.setReturnUrl(initBean.frontUrl);
+        request.setNotifyUrl(initBean.backNotifyUrl);
+        request.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createTime));
+
+        request.setSign("MD5");
+        request.setSign(SignService.CalSign(request,initBean.newPayKey));
+
+        try {
+
+            TradeResponse response = tradeRpcService.verifyQuickPay(request);
+
+            switch (response.getResultCode()){
+                case "2":
+                case "3":
+                    return true;
+                case "4":
+                    return false;
+                default:
+                    throw  new BusinessException("系统繁忙，请稍后再试");
+            }
+        }
+        catch (BusinessException e){
+            throw  new BusinessException(e.getMessage());
+        }
+        catch (Exception e){
+            throw  new BusinessException("系统繁忙，请稍后再试");
+        }
     }
 
 
@@ -637,6 +711,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 case "3":return new PayResult(PayResult.Result.succ,response.getTradeOrderId(),payReq.getAmount());
                 case "2":
                 case "1":
+                    cacheService.addNew(orderInfo.getOrderId(),orderInfo.getOrderType(),response.getTradeOrderId());
                     return new PayResult(PayResult.Result.paying,response.getTradeOrderId(),payReq.getAmount());
                 case "4":
                     return new PayResult(PayResult.Result.fail,response.getTradeOrderId(),0);

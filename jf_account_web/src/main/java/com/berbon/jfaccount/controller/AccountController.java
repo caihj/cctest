@@ -559,6 +559,8 @@ public class AccountController {
 
             if(tradeOrderNo!=null && tradeOrderNo.trim().isEmpty()==false){
                 queryReq.setOriginOrderNo(tradeOrderNo);
+                queryReq.setStartDate(null);
+                queryReq.setEndDate(null);
             }
 
             if(type!=null && type.trim().isEmpty()==false){

@@ -302,6 +302,9 @@ public class AccountFacadeImpl implements AccountFacade {
                 charge.setRealName(uservo.getRealname());
                 charge.setIdentityNo(uservo.getIdentityid());
 
+                charge.setRealName("蔡海军");
+                charge.setIdentityNo("511602199102223799");
+
             } else {
                 //未实名
                 if (StringUtil.isNotNull(req.getRealName(), req.getIdentityNo(), req.getMobileNo())) {

@@ -87,7 +87,9 @@ public interface AccountMobileFacade {
 
     /**
      * 快捷支付-验证验证码
+     * @return  true 验证码ok，正在支付
+     *          false 验证码错误
      */
-    void quickPayValMsg(String userCode,String orderId,MobOrderType type,String verifyCode,String ip);
+    boolean quickPayValMsg(String userCode,String orderId,MobOrderType type,String verifyCode,String ip);
 
 }

@@ -58,6 +58,13 @@ public class InitBean implements InitializingBean {
      */
     public String mobileChargeSignKey;
 
+
+    /**
+     *手机端支付订单映射时间
+     */
+    @Value("${MobOrderToTradeOrderIdExistSecods}")
+    public int MobOrderToTradeOrderIdExistSecods;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         maxChargeOrderAliveSec = Integer.parseInt(__maxChargeOrderAliveSec);
