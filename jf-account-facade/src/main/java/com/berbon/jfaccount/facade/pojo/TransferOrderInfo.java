@@ -35,6 +35,15 @@ public class TransferOrderInfo implements Serializable {
     protected   String  realName;
     protected  String phone;
     protected  String fromMob;
+    protected String createUserCode;
+
+    public String getCreateUserCode() {
+        return createUserCode;
+    }
+
+    public void setCreateUserCode(String createUserCode) {
+        this.createUserCode = createUserCode;
+    }
 
     public long getAmount() {
         return amount;

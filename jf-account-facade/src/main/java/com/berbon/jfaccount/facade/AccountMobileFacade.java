@@ -3,6 +3,7 @@ package com.berbon.jfaccount.facade;
 import com.berbon.jfaccount.facade.mobpojo.*;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by chj on 2016/8/10.
@@ -91,5 +92,16 @@ public interface AccountMobileFacade {
      *          false 验证码错误
      */
     boolean quickPayValMsg(String userCode,String orderId,MobOrderType type,String verifyCode,String ip);
+
+
+    /**
+     * 支付回调验证
+     */
+    void payFrontCallBack(Map<String,String []> params);
+
+    /**
+     * 支付回调验证
+     */
+    void payBackCallBack(Map<String,String []> params);
 
 }

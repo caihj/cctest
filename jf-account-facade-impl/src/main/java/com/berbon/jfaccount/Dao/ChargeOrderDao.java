@@ -156,7 +156,7 @@ public class ChargeOrderDao {
     public int update(final long id, final String tradeOderNo, final int state, final String stateDesc, final int cardType,final int type
     ,final String bindNo,final long payValue){
 
-        return slaveTemplate.update(new PreparedStatementCreator() {
+        return masterTemplate.update(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                 PreparedStatement ps = con.prepareStatement("update account_charge_order set tradeOrderId=?,state=?," +
@@ -184,7 +184,7 @@ public class ChargeOrderDao {
 
     public int update(final long id, final int state, final String stateDesc) {
 
-        return slaveTemplate.update(new PreparedStatementCreator() {
+        return masterTemplate.update(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
                 PreparedStatement ps = con.prepareStatement("update account_charge_order set state=?," +

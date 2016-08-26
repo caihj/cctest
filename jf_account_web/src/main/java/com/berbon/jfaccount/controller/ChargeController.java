@@ -121,6 +121,21 @@ public class ChargeController {
         return result;
     }
 
+    @RequestMapping(value = "/resendMsg", method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult reSendMsg(HttpServletRequest request){
+
+        String tradeOrderId = request.getParameter("tradeOrderId");
+
+        JsonResult result  = new JsonResult();
+
+        ReSendChargeValMsgRsp rsp = accountFacade.reSendQuickValMsg(tradeOrderId, BusOrderType.charge_order, IpTool.getIp(request));
+
+        result.setResult(ResultAck.succ);
+        result.setData(rsp);
+
+        return result;
+    }
 
     @RequestMapping(value = "/validateQuickMsg" , method ={ RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
@@ -129,10 +144,24 @@ public class ChargeController {
 
         QuickPayMsgInfoReq req = new QuickPayMsgInfoReq();
 
+        String type = request.getParameter("type");
+
         req.setVerifyCode(request.getParameter("verifyCode"));
         req.setTradeOrderId(request.getParameter("tradeOrderId"));
         req.setSrcChannel("1");
         req.setIp(IpTool.getIp(request));
+        switch (type){
+            case "charge":
+                req.setType(BusOrderType.charge_order);
+                break;
+            case "transfer":
+                req.setType(BusOrderType.transfer_order);
+                break;
+            default:
+                logger.error("参数错误");
+                result.setResult(ResultAck.para_error);
+                return result;
+        }
 
         if(StringUtil.isNull(req.getVerifyCode(),req.getTradeOrderId())){
             logger.error("参数错误");

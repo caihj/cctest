@@ -3,11 +3,14 @@ package com.berbon.jfaccount.controller;
 import com.berbon.jfaccount.commen.*;
 import com.berbon.jfaccount.facade.pojo.*;
 import com.berbon.jfaccount.utils.IpTool;
+import com.berbon.jfaccount.utils.MyUtils;
 import com.berbon.user.pojo.Users;
 import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
 import com.sztx.pay.center.rpc.api.service.AccountRpcService;
+import com.sztx.usercenter.rpc.api.domain.out.UserVO;
+import com.sztx.usercenter.rpc.api.service.QueryUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -36,10 +39,13 @@ public class TransferController {
 
     private AccountRpcService accountRpcService;
 
+    private QueryUserInfoService queryUserInfoService;
+
     @ModelAttribute
     public  void init() {
         accountFacade = dubboClient.getDubboClient("accountFacade");
         accountRpcService = dubboClient.getDubboClient("accountRpcService");
+        queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
     }
 
 
@@ -80,7 +86,7 @@ public class TransferController {
      * @return
      */
     @RequestMapping(value = "/transfer" , method = {RequestMethod.GET,RequestMethod.POST})
-    public String CreateTransferOrder(HttpServletRequest request,ModelMap map) {
+    public String CreateTransferOrder(HttpServletRequest request,ModelMap map,HttpServletRequest response) {
 
         logger.info("recv  request /account/transferInit");
 
@@ -117,13 +123,20 @@ public class TransferController {
             if (rsp == null || rsp.getOrderInfo() == null) {
                 logger.error("创建订单失败");
                 map.put("errorCode", MyErrorCodeEnum.system_error.getErrCode());
-                map.put("errorMsg",MyErrorCodeEnum.system_error.getOutDesc());
+                if(rsp!=null)
+                    map.put("errorMsg",rsp.getMsg());
+                else
+                    map.put("errorMsg",MyErrorCodeEnum.system_error.getOutDesc());
                 return ConstStr.error_page;
             }
             order = rsp.getOrderInfo();
             orderId = order.getOrderId();
         }else if(orderId!=null && orderId.trim().isEmpty()==false){
             order = accountFacade.queryTransferDetail(orderId);
+            //判断状态，已支付跳到转账成功页
+            if(order.getOrderState()==3){
+               return "redirect:/account/transferResult.htm?tradeOrderNo="+order.getTradeOrderId();
+            }
         }else{
             map.put("errorCode", MyErrorCodeEnum.param_eror.getErrCode());
             map.put("errorMsg",MyErrorCodeEnum.param_eror.getOutDesc());
@@ -135,9 +148,9 @@ public class TransferController {
 
         map.put("tradeNo",order.getOrderId());
         map.put("payee",order.getRealName());
-        map.put("remark",order.getAttach());
-        map.put("totalFee",order.getAmount()/100.0);
-        map.put("balance",balance/100.0);
+        map.put("remark", order.getAttach());
+        map.put("totalFee", MyUtils.fen2yuan(order.getAmount()));
+        map.put("balance",MyUtils.fen2yuan(balance));
 
         String hasMoney="0";
 
@@ -145,9 +158,9 @@ public class TransferController {
             hasMoney="1";
         }
 
-        map.put("hasMoney",hasMoney);
-        map.put("orderId",orderId);
-        logger.info("转账订单号:"+orderId);
+        map.put("hasMoney", hasMoney);
+        map.put("orderId", orderId);
+        logger.info("转账订单号:" + orderId);
 
         return "/account/transfer";
     }
@@ -201,6 +214,20 @@ public class TransferController {
         return  result;
     }
 
+    @RequestMapping(value = "/resendMsg", method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult reSendMsg(HttpServletRequest request){
 
+        String tradeOrderId = request.getParameter("tradeOrderId");
+
+        JsonResult result  = new JsonResult();
+
+        ReSendChargeValMsgRsp rsp = accountFacade.reSendQuickValMsg(tradeOrderId, BusOrderType.charge_order, IpTool.getIp(request));
+
+        result.setResult(ResultAck.succ);
+        result.setData(rsp);
+
+        return result;
+    }
 
 }

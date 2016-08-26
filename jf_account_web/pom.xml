@@ -216,6 +216,11 @@
 			<artifactId>user-center-rpc-api</artifactId>
 			<version>1.5.1</version>
 		</dependency>
+		<dependency>
+			<groupId>com.sztx.bbmall.sms</groupId>
+			<artifactId>sms-facade</artifactId>
+			<version>1.0.0</version>
+		</dependency>
 
 	</dependencies>
 	<build>

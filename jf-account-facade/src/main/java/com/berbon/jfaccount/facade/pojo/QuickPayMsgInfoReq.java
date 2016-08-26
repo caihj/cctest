@@ -15,6 +15,8 @@ public class QuickPayMsgInfoReq implements Serializable {
 
     private String ip;
 
+    private BusOrderType type;
+
     public String getVerifyCode() {
         return verifyCode;
     }
@@ -53,5 +55,13 @@ public class QuickPayMsgInfoReq implements Serializable {
 
     public void setIp(String ip) {
         this.ip = ip;
+    }
+
+    public BusOrderType getType() {
+        return type;
+    }
+
+    public void setType(BusOrderType type) {
+        this.type = type;
     }
 }

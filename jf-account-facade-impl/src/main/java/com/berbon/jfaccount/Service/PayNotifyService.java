@@ -43,24 +43,24 @@ public class PayNotifyService {
         notifyData.setPayTime(new SimpleDateFormat("yyyyMMddHHmmss").format(data.payTime));
         notifyData.setPayValue(data.payAmount + "");
         notifyData.setResultCode("1001");
-        notifyData.setResultMsg("支付成功");
+        notifyData.setResultMsg("paysucc");
         notifyData.setService("mob_payment_res");
         notifyData.setSignType("MD5");
         notifyData.setVersion("1.0.0");
 
-        notifyData.createSign(initBean.mobileChargeSignKey);
+        notifyData.setSign(notifyData.createSign(initBean.mobileChargeSignKey));
 
         String packetId = StringUtil.getSystemUniqueNo();
 
         String msgsrvCmd = null;
         try {
             msgsrvCmd = "BerbonMobileChargeNewApp PayResultNotify  ConnId=" + packetId +
-                    " NotifyData=" + Base64Utils.encode(JSON.toJSONString(notifyData).getBytes("GBK"))+" Other=";
+                    " NotifyData=" + new String(Base64Utils.encode(JSON.toJSONString(notifyData).getBytes("GBK")))+" Other=";
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
-        ProxyRequestParam param = new ProxyRequestParam(1, packetId, 2, msgsrvCmd);
+        ProxyRequestParam param = new ProxyRequestParam(2, packetId, 1, msgsrvCmd);
 
         String result = msgSrvProxyFacade.getResult(param);
 
@@ -74,30 +74,30 @@ public class PayNotifyService {
         NotifyData notifyData = new NotifyData();
 
         notifyData.setCurrency("156");
-        notifyData.setMerId(initBean.mobileChargeMerId);
+        notifyData.setMerId(initBean.gameChargeMerId);
         notifyData.setMerOrderId(data.orderId);
         notifyData.setPayOrderId(data.payOrderId);
         notifyData.setPayTime(new SimpleDateFormat("yyyyMMddHHmmss").format(data.payTime));
         notifyData.setPayValue(data.payAmount + "");
         notifyData.setResultCode("1001");
-        notifyData.setResultMsg("支付成功");
+        notifyData.setResultMsg("paysucc");
         notifyData.setService("mob_payment_res");
         notifyData.setSignType("MD5");
         notifyData.setVersion("1.0.0");
 
-        notifyData.createSign(initBean.mobileChargeSignKey);
+        notifyData.setSign(notifyData.createSign(initBean.mobileChargeSignKey));
 
         String packetId = StringUtil.getSystemUniqueNo();
 
         String msgsrvCmd = null;
         try {
             msgsrvCmd = "GamePayCallClt PayResultNotify  ConnId=" + packetId +
-                    " NotifyData=" + Base64Utils.encode(JSON.toJSONString(notifyData).getBytes("GBK"))+" Other=";
+                    " NotifyData=" + new String(Base64Utils.encode(JSON.toJSONString(notifyData).getBytes("GBK")))+" Other=";
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
-        ProxyRequestParam param = new ProxyRequestParam(1, packetId, 2, msgsrvCmd);
+        ProxyRequestParam param = new ProxyRequestParam(2, packetId, 1, msgsrvCmd);
 
         String result = msgSrvProxyFacade.getResult(param);
 

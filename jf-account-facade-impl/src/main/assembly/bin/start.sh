@@ -7,7 +7,7 @@ CONF_DIR=$DEPLOY_DIR/conf
 
 
 SERVER_NAME=`sed '/application.name/!d;s/.*=//' conf/config.properties | tr -d '\r'`
-SERVER_PROTOCOL=`sed '/protocol.name/!d;s/.*=//' conf/config.properties | tr -d '\r'`
+SERVER_PROTOCOL=`sed 'dubbo.protocols/!d;s/.*=//' conf/config.properties | tr -d '\r'`
 SERVER_PORT=`sed '/protocol.port/!d;s/.*=//' conf/config.properties | tr -d '\r'`
 LOGS_FILE=`sed '/log4j.file/!d;s/.*=//' conf/config.properties | tr -d '\r'`
 

@@ -5,7 +5,7 @@ import com.berbon.jfaccount.commen.*;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
-import com.berbon.jfaccount.facade.pojo.NotifyType;
+import com.berbon.jfaccount.facade.pojo.NotifyOrderType;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.jfaccount.facade.pojo.ValNotifyRsp;
 import com.berbon.jfaccount.pojo.BankInfoDetail;
@@ -14,7 +14,6 @@ import com.berbon.jfaccount.pojo.ChargeRecord;
 import com.berbon.jfaccount.pojo.TransferData;
 import com.berbon.jfaccount.utils.MyUtils;
 import com.berbon.user.pojo.Users;
-import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
 import com.sztx.pay.center.rpc.api.domain.*;
@@ -22,8 +21,6 @@ import com.sztx.pay.center.rpc.api.domain.*;
 import com.sztx.pay.center.rpc.api.domain.request.QueryOrderRequest;
 import com.sztx.pay.center.rpc.api.domain.response.OrderRecharge;
 import com.sztx.pay.center.rpc.api.domain.response.OrderRechargeList;
-import com.sztx.pay.center.rpc.api.domain.response.OrderTransfer;
-import com.sztx.pay.center.rpc.api.domain.response.OrderTransferList;
 import com.sztx.pay.center.rpc.api.service.*;
 import com.sztx.usercenter.rpc.api.domain.out.UserVO;
 import com.sztx.usercenter.rpc.api.service.QueryUserInfoService;
@@ -62,8 +59,6 @@ public class AccountController {
 
     private QueryService queryService;
 
-
-
     private BankRpcService bankRpcService;
 
     private BankPayLimitRpcService  bankPayLimitRpcService;
@@ -74,6 +69,9 @@ public class AccountController {
 
     private UserActFlowRpcService userActFlowRpcService;
 
+    @Autowired
+    private InitBean initBean;
+
     @ModelAttribute
     public  void init(){
         try {
@@ -81,7 +79,6 @@ public class AccountController {
             accountRpcService = dubboClient.getDubboClient("accountRpcService");
             queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
             queryService = dubboClient.getDubboClient("queryService");
-
             bankRpcService = dubboClient.getDubboClient("bankRpcService");
             bankPayLimitRpcService = dubboClient.getDubboClient("bankPayLimitRpcService");
             settleRpcService = dubboClient.getDubboClient("settleRpcService");
@@ -93,20 +90,6 @@ public class AccountController {
         }
     }
 
-    /**
-     * session test
-     * @return
-     */
-    @RequestMapping(value = "/sessionTest" , method ={ RequestMethod.POST, RequestMethod.GET},produces="application/json;charset=UTF-8")
-    @ResponseBody
-    public JsonResult sessionTest(HttpServletRequest request){
-        JsonResult result = new JsonResult();
-        Users user = CheckLoginInterceptor.getUsers(request.getSession());
-        result.setResult(ResultAck.succ.getCode());
-        result.setRetinfo(ResultAck.succ.getDesc());
-        result.setData(user);
-        return result;
-    }
 
     @RequestMapping(value = "rechargeResult" , method = { RequestMethod.POST, RequestMethod.GET})
      public String chargeSucc(HttpServletRequest request, ModelMap map){
@@ -122,7 +105,7 @@ public class AccountController {
             int state  = order.getState();
 
             if(state==2){
-                map.put("tradeAmount",order.getAmount()/100.0);
+                map.put("tradeAmount", MyUtils.fen2yuan(order.getAmount()).toString());
                 return "/account/rechargeResult";
             }else if(state==1 || state==0 ){
                 map.put("errorCode", "-1");
@@ -147,10 +130,10 @@ public class AccountController {
         Map params = request.getParameterMap();
 
        //通知验签
-        ValNotifyRsp rsp = accountFacade.valFrontNotify(params, NotifyType.charge_notify);
+        ValNotifyRsp rsp = accountFacade.valFrontNotify(params, NotifyOrderType.charge_notify);
 
         if(rsp.getCode().equals(ValNotifyRsp.CODE.succ)){
-            map.put("tradeAmount",rsp.getAmount()/100.0);
+            map.put("tradeAmount", MyUtils.fen2yuan(rsp.getAmount()).toString());
          }else if(rsp.getCode() == ValNotifyRsp.CODE.fail || rsp.getCode() == ValNotifyRsp.CODE.exception){
             map.put("errorCode", "-1");
             map.put("errorMsg","充值失败,请稍后再试，或联系客服");
@@ -160,7 +143,6 @@ public class AccountController {
         return "/account/rechargeEBankResult";
     }
 
-
     @RequestMapping(value = "transferResult" , method = { RequestMethod.POST, RequestMethod.GET})
     public String transferResult(HttpServletRequest request , ModelMap map){
 
@@ -168,8 +150,15 @@ public class AccountController {
         TransferOrderInfo order = accountFacade.queryTransferOrderInfo(tradeOrderNo);
 
         if(order!=null){
-            map.put("payeeName", MyUtils.markName(order.getRealName()));
-            map.put("tradeAmount", order.getAmount()/100.0);
+            String realName = order.getRealName();
+            if(realName==null || realName.trim().isEmpty()==true){
+                realName = order.getToUserCode();
+            }else{
+                realName = MyUtils.markName(order.getRealName());
+            }
+
+            map.put("payeeName", realName);
+            map.put("tradeAmount",  MyUtils.fen2yuan(order.getAmount()).toString());
             return "/account/transferResult";
         }else{
             map.put("errorCode", "-1");
@@ -181,10 +170,21 @@ public class AccountController {
 
 
     @RequestMapping(value = "transferResultNotify" , method = { RequestMethod.POST, RequestMethod.GET})
-    public String transferResultNotify(HttpServletRequest request){
+    public String transferResultNotify(HttpServletRequest request,ModelMap map){
 
-        Map<String, String[]> map = request.getParameterMap();
 
+        Map<String, String[]> params = request.getParameterMap();
+
+        //通知验签
+        ValNotifyRsp rsp = accountFacade.valFrontNotify(params, NotifyOrderType.transfer_notify);
+
+        if(rsp.getCode().equals(ValNotifyRsp.CODE.succ)){
+            map.put("tradeAmount", MyUtils.fen2yuan(rsp.getAmount()).toString());
+        }else if(rsp.getCode() == ValNotifyRsp.CODE.fail || rsp.getCode() == ValNotifyRsp.CODE.exception){
+            map.put("errorCode", "-1");
+            map.put("errorMsg","充值失败,请稍后再试，或联系客服");
+            return ConstStr.error_page;
+        }
 
         return "/account/transferEBankResult";
     }
@@ -213,7 +213,10 @@ public class AccountController {
 //                qPayCards.add(card);
 //            }
 //        }
-        pageMap.put("cardCount", cards.size());
+        if(cards!=null)
+            pageMap.put("cardCount", cards.size());
+        else
+            pageMap.put("cardCount", 0);
 
 
         //fixme 账户余额
@@ -221,9 +224,9 @@ public class AccountController {
         logger.info(user.getUserCode()+",余额"+balance);
         int freezeBalance = 0;
         //账户余额
-        pageMap.put("actBalance", (balance + freezeBalance+0.0)/100.0);
-        pageMap.put("leftBalance", (balance+0.0)/100.0 );
-        pageMap.put("freezeBalance", (freezeBalance+0.0)/100.0);
+        pageMap.put("actBalance", MyUtils.fen2yuan((balance + freezeBalance)).toString());
+        pageMap.put("leftBalance", MyUtils.fen2yuan((balance)).toString() );
+        pageMap.put("freezeBalance", MyUtils.fen2yuan(freezeBalance).toString());
 
         //用户最后登录信息,用户姓名
         UserVO userVO = queryUserInfoService.getUserInfo(user.getUserCode());
@@ -251,7 +254,7 @@ public class AccountController {
         String bindNo = request.getParameter("bindNo");
 
         UserVO userVO = queryUserInfoService.getUserInfo(user.getUserCode());
-        map.put("balance",balance/100.0);
+        map.put("balance", MyUtils.fen2yuan(balance));
         map.put("realName",userVO.getRealname());
         map.put("loginName",userVO.getUserCode());
 
@@ -358,6 +361,8 @@ public class AccountController {
             String endDate = request.getParameter("endTime");
             String transferOrderId =request.getParameter("transferOrderId");
 
+            Users user = CheckLoginInterceptor.getUsers(request.getSession());
+
             int IpageNo = Integer.parseInt(pageNo);
             int IpageSize  = Integer.parseInt(pageSize);
             Date startD = null;
@@ -371,14 +376,14 @@ public class AccountController {
                 endD = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endDate+" 23:59:59");
             }
 
-            Users user = CheckLoginInterceptor.getUsers(request.getSession());
+
 
             if(transferOrderId!=null && transferOrderId.trim().isEmpty()==false){
                 startD = null;
                 endD = null;
             }
 
-            PageResult<TransferOrderInfo> records = accountFacade.queryTransferOrder(IpageNo,IpageSize,startD,endD,transferOrderId);
+            PageResult<TransferOrderInfo> records = accountFacade.queryTransferOrder(IpageNo,IpageSize,startD,endD,transferOrderId,user.getUserCode());
 
             JSONObject json = new JSONObject();
 
@@ -416,7 +421,7 @@ public class AccountController {
                     transferData.setOtherAccount(otherAccount);
                     transferData.setType(intOrOut);
                     transferData.setRemark(t.getAttach());
-                    transferData.setTransferAmount(t.getAmount()/100.0+"");
+                    transferData.setTransferAmount(MyUtils.fen2yuan(t.getAmount()).toString());
                     transferData.setTransferStatusStr(t.getOrderStateDesc());
 
                     f_records.add(transferData);
@@ -555,12 +560,13 @@ public class AccountController {
             queryReq.setPageSize(Integer.parseInt(pageSize));
             queryReq.setStartDate(startD);
             queryReq.setEndDate(endD);
-            queryReq.setActType(8);
+            queryReq.setChannelId(initBean.channelId);
 
             if(tradeOrderNo!=null && tradeOrderNo.trim().isEmpty()==false){
                 queryReq.setOriginOrderNo(tradeOrderNo);
-                queryReq.setStartDate(null);
-                queryReq.setEndDate(null);
+
+                queryReq.setStartDate(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-01-01 23:59:59"));
+                queryReq.setEndDate(new Date());
             }
 
             if(type!=null && type.trim().isEmpty()==false){
@@ -597,7 +603,7 @@ public class AccountController {
                 for (UserActFlowResponse.UserActFlow t : records.getUserActFlowS()) {
                     CashRecord record = new CashRecord();
                     record.setPayDate(t.getTradeTime());
-                    record.setTradeOrderNo(t.getTradeOrderNo());
+                    record.setTradeOrderNo(t.getOriginOrderNo());
                     record.setTradeOrderType(t.getTradeType());
 
                     String otherAccount = "";
@@ -615,8 +621,8 @@ public class AccountController {
 
                     record.setOtherAccount(otherAccount);
 
-                    record.setAmount((Math.abs(t.getTranAmount()) + 0.0f) / 100.0 + "");
-                    record.setBalance((t.getActBalance() + 0.0f) / 100.0 + "");
+                    record.setAmount(MyUtils.fen2yuan(Math.abs(t.getTranAmount())).toString());
+                    record.setBalance(MyUtils.fen2yuan(t.getActBalance()).toString());
 
 
                     if (t.getTranAmount() < 0) {
@@ -656,20 +662,35 @@ public class AccountController {
         try {
 
             //网银支付
-            List<BankInfo> ebankDCSeq = bankRpcService.findBankList(1);
+            List<BankInfo> ebankDCSeq =null ;
+            try {
+                ebankDCSeq = bankRpcService.findBankList(1);
+            }
+            catch (Exception e){
+                logger.error("异常"+e.getMessage());
+            }
             List<BankInfoDetail> ebankDeail = new ArrayList<>();
 
-            for(BankInfo info:ebankDCSeq){
-                BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),1);
-                ebankDeail.add(new BankInfoDetail(info,limit));
+            if(ebankDCSeq!=null){
+                for(BankInfo info:ebankDCSeq){
+                    BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),1);
+                    ebankDeail.add(new BankInfoDetail(info,limit));
+                }
             }
 
             //快捷支付
-            List<BankInfo> expressDCSeq = bankRpcService.findBankList(2);
+            List<BankInfo> expressDCSeq =null ;
+            try {
+                expressDCSeq = bankRpcService.findBankList(2);
+            }catch (Exception e){
+                logger.error("异常"+e.getMessage());
+            }
             List<BankInfoDetail> expressDCSeqDetail = new ArrayList<>();
-            for(BankInfo info:expressDCSeq){
-                BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),2);
-                expressDCSeqDetail.add(new BankInfoDetail(info, limit));
+            if(expressDCSeq!=null) {
+                for (BankInfo info : expressDCSeq) {
+                    BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(), 2);
+                    expressDCSeqDetail.add(new BankInfoDetail(info, limit));
+                }
             }
 
             Map<String,Object> banks = new HashMap<>();
@@ -777,12 +798,15 @@ public class AccountController {
 
         List<BindCardInfo> cards = accountRpcService.queryBindCardList(user.getUserCode(), 0);
 
-        for(BindCardInfo cardInfo:cards){
-            if(cardInfo.getCardNo().equals(cardno)){
-                json.put("cardCanUse",false);
-                json.put("errorMsg", "此卡已绑定快捷支付,请换其它卡!");
-                result.setData(json);
-                return result;
+
+        if(cards!=null) {
+            for (BindCardInfo cardInfo : cards) {
+                if (cardInfo.getCardNo().equals(cardno)) {
+                    json.put("cardCanUse", false);
+                    json.put("errorMsg", "此卡已绑定快捷支付,请换其它卡!");
+                    result.setData(json);
+                    return result;
+                }
             }
         }
         json.put("cardCanUse",true);

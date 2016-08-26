@@ -1,7 +1,6 @@
 package com.berbon.jfaccount.impl;
 
 import com.berbon.jfaccount.Dao.*;
-import com.berbon.jfaccount.Service.OrderCacheService;
 import com.berbon.jfaccount.Service.PayNotifyService;
 import com.berbon.jfaccount.Service.SignService;
 import com.berbon.jfaccount.comm.BusinessType;
@@ -9,14 +8,10 @@ import com.berbon.jfaccount.comm.ErrorCode;
 import com.berbon.jfaccount.comm.InitBean;
 import com.berbon.jfaccount.facade.AccountMobileFacade;
 import com.berbon.jfaccount.facade.mobpojo.*;
-import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
-import com.berbon.jfaccount.facade.pojo.QuickPayValRsp;
-import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
-import com.berbon.jfaccount.facade.pojo.WithdrawOrderInfo;
-import com.berbon.jfaccount.pojo.GameChargeOrderInfo;
-import com.berbon.jfaccount.pojo.MobieChargeOrderInfo;
-import com.berbon.jfaccount.pojo.MobileOrderInfo;
-import com.berbon.jfaccount.pojo.PayNotifyData;
+import com.berbon.jfaccount.facade.mobpojo.CreateChargeReq;
+import com.berbon.jfaccount.facade.mobpojo.CreateChargeRsp;
+import com.berbon.jfaccount.facade.pojo.*;
+import com.berbon.jfaccount.pojo.*;
 import com.berbon.jfaccount.util.Pair;
 import com.berbon.jfaccount.util.UtilTool;
 import com.pay1pay.hsf.common.logger.Logger;
@@ -31,10 +26,10 @@ import com.sztx.usercenter.rpc.api.service.QueryUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by chj on 2016/8/10.
@@ -72,8 +67,9 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
     @Autowired
     private GameChargeOrderDao gameDao;
 
+
     @Autowired
-    private OrderCacheService cacheService;
+    private PayOrderDao payOrderDao;
 
     @Override
     public String echo(String in) {
@@ -132,8 +128,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         charge.setPayerUserId(req.getUserId());
         charge.setAmount((int) orderInfo.getAmount());
         charge.setOrderId(orderInfo.getChargeBussOrderNo());
-        charge.setReturnUrl(initBean.frontUrl);
-        charge.setNotifyUrl(initBean.backNotifyUrl);
+        charge.setReturnUrl(initBean.chargefrontNotifyUrl);
+        charge.setNotifyUrl(initBean.chargebackNotifyUrl);
         charge.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreateTime()));
         charge.setSignType("MD5");
         charge.setAttach("");
@@ -157,7 +153,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             chargeOrderDao.update(orderInfo.getId(),response.getTradeOrderId(),state.first,state.second,1,cardInfo.getCardType(),req.getBindNo(),orderInfo.getAmount());
 
         }catch (Exception e){
-            throw new BusinessException("系统繁忙，请稍后再试");
+            throw new BusinessException(e.getMessage());
         }
 
 
@@ -189,7 +185,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             rsp.setResultCode(response.getResultCode());
             rsp.setResultMsg(response.getResultMsg());
         }catch (Exception e){
-            throw new BusinessException("系统繁忙，请稍后再试");
+            throw new BusinessException(e.getMessage());
         }
 
         return rsp;
@@ -222,8 +218,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setAttach("");
         //no reference
         request.setSrcChannel("2");
-        request.setReturnUrl(initBean.frontUrl);
-        request.setNotifyUrl(initBean.backNotifyUrl);
+        request.setReturnUrl(initBean.chargefrontNotifyUrl);
+        request.setNotifyUrl(initBean.chargebackNotifyUrl);
         request.setOrderTime(orderTime);
         request.setExpireTime(expireTime);
         request.setSignType("MD5");
@@ -240,7 +236,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             }
 
         }catch (Exception e){
-            throw new BusinessException("系统繁忙，请稍后再试");
+            throw new BusinessException(e.getMessage());
         }
 
         return rsp;
@@ -263,6 +259,9 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         order.setCreateTime(new Date());
         order.setOrderState(1);
         order.setOrderStateDesc("待支付");
+        order.setChannelId(initBean.channelId);
+        order.setBusinessType(BusinessType.type_2014.type + "");
+        order.setCreateUserCode(req.getPayerUserId());
 
         transferOrderDao.createOrder(order);
 
@@ -289,15 +288,17 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setBindNo(orderInfo.getBindNo());
         request.setAttach(orderInfo.getAttach());
         request.setSrcChannel("1");
-        //request.setReturnUrl(initBean.transferNotifyUrl);
+        request.setReturnUrl(initBean.transferNotifyUrl);
         request.setNotifyUrl(initBean.transferbackNotifyUrl);
         request.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getCreateTime()));
-        request.setExpireTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getExpireTime()));
+        if(orderInfo.getExpireTime()!=null)
+            request.setExpireTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getExpireTime()));
         request.setIsUsePwd(orderInfo.getIsUsePwd() + "");
         request.setChannelId(orderInfo.getChannelId());
-        request.setBusinessType("1114");
+        request.setBusinessType(BusinessType.type_2014.type + "");
         request.setSignType("MD5");
-
+        request.setSrcIp(orderInfo.getReference());
+        request.setSign(SignService.CalSign(request, initBean.newPayKey));
 
         DoTransferRsp rsp = new DoTransferRsp();
 
@@ -312,8 +313,9 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             TransferOrderDao.OrderState state = TransferOrderDao.GetState(brsp.getResultCode());
             transferOrderDao.update(orderInfo.getId(),state.state,state.desc,brsp.getTradeOrderId(),1,"");
 
-        }catch (Exception e){
-            logger.error("发生异常，转账失败!");
+        }catch (BusinessException e){
+            logger.error("发生异常，转账失败!"+e.getMessage());
+            throw new BusinessException(e.getMessage());
         }
 
 
@@ -342,6 +344,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
     public List<BankCardInfo> queryWithdrawalBankCard(String userCode) {
 
         AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+
         List<BindCardInfo> cards = accountRpcService.queryBindCardList(userCode, 2);
 
         List<BankCardInfo> ret = new ArrayList<>();
@@ -394,14 +397,14 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setSrcChannel("2");
         request.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreatetime()));
         request.setChannelId(initBean.channelId);
-        request.setBusinessType(initBean.withdrawBusinessType);
+        request.setBusinessType(BusinessType.type_2014.type+"");
         request.setSign("MD5");
         request.setSign(SignService.CalSign(request,initBean.newPayKey));
 
         try{
             tradeRpcService.withdraw(request);
         }catch (Exception e){
-            throw new BusinessException("系统繁忙，请稍后再试");
+            throw new BusinessException(e.getMessage());
         }
 
         return rsp;
@@ -421,25 +424,30 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
     public BalancePayRsp BalancePay(String userCode,String orderId,MobOrderType type, String ip) {
 
         MobileOrderInfo payorder = queryPayOrder(userCode, orderId, type);
+        payorder.setFromIp(ip);
+        payorder.setBankId("0000000");
         PayResult result = payOrder(payorder);
 
 
-        //支付成功
-        PayNotifyData data = new PayNotifyData();
+        if(result.result== PayResult.Result.succ){
+            //支付成功
+            PayNotifyData data = new PayNotifyData();
 
-        data.orderId = payorder.getOrderId();
-        data.payAmount = result.payValue;
-        data.payTime  = new Date();
-        data.payOrderId = result.payOrderId;
+            data.orderId = payorder.getOrderId();
+            data.payAmount = result.payValue;
+            data.payTime  = new Date();
+            data.payOrderId = result.payOrderId;
 
-        switch (payorder.getOrderType()){
-            case  mobile_charge:
-                payNotifyService.mobileChargeNotify(data);
-                break;
-            case game_charge:
-                payNotifyService.gameChargeNotify(data);
-                break;
+            switch (payorder.getOrderType()){
+                case  mobile_charge:
+                    payNotifyService.mobileChargeNotify(data);
+                    break;
+                case game_charge:
+                    payNotifyService.gameChargeNotify(data);
+                    break;
+            }
         }
+
         return new BalancePayRsp();
     }
 
@@ -478,13 +486,13 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             }
 
             //判断订单状态
-            if(order.getStatus()==0){
-
+            if(order.getOrderStatus()==0){
                 logger.info("支付游戏充值订单:" + orderId);
+                payorder.setDownOrderTime(new Date(order.getOrderCreateTime() * 1000));
 
-                payorder.setDownOrderTime(new Date(order.getOrderCreateTime()*1000));
-                payorder.setAmount(order.getTotalMoney());
-                payorder.setTradeType(BusinessType.type_2002);
+                BigDecimal amount = new BigDecimal(order.getTotalMoney());
+                payorder.setAmount(amount.divide(new BigDecimal(10)).longValue());
+                payorder.setTradeType(BusinessType.type_2005);
                 payorder.setGoodsName("游戏充值");
                 payorder.setGoodsDetail("游戏充值");
             }else{
@@ -511,7 +519,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         payorder.setBankId(cardinfo.getBankId());
         PayResult result = payOrder(payorder);
         if(result.result!= PayResult.Result.paying){
-            throw new BusinessException("支付状态异常");
+            throw new BusinessException("支付状态异常,"+result.message);
         }
 
         return new QuickPayRsp();
@@ -563,15 +571,17 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         ResendQuickVCRequest  request =  new ResendQuickVCRequest();
 
         request.setOrderId(bussOrderNo);
-        String tradeOrderId = cacheService.getTradeOrderId(orderId,type);
-        if(tradeOrderId==null){
-            throw  new BusinessException("支付超时!");
+        //String tradeOrderId = cacheService.getTradeOrderId(orderId,type);
+        PayOrderInfo payOrderInfo = payOrderDao.getByOrderIdAndType(orderId, type);
+        if(payOrderInfo==null){
+            throw  new BusinessException("未找到订单");
         }
-        request.setTradeOrderId(tradeOrderId);
+
+        request.setTradeOrderId(payOrderInfo.getTradeOrderId());
 
         request.setSrcChannel("2");
-        request.setReturnUrl(initBean.frontUrl);
-        request.setNotifyUrl(initBean.backNotifyUrl);
+        request.setReturnUrl(initBean.payfrontNotifyUrl);
+        request.setNotifyUrl(initBean.payBackNotifyUrl);
         request.setOrderTime(orderTime);
         request.setExpireTime(expireTime);
         request.setSignType("MD5");
@@ -580,6 +590,26 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         String sign = SignService.CalSign(request, initBean.newPayKey);
 
         request.setSign(sign);
+
+        try
+        {
+            TradeResponse rsp = tradeRpcService.resendQuickVC(request);
+            switch (rsp.getResultCode()){
+                case "3":
+                    //成功
+                    break;
+                case "4":
+                    //失败
+                    throw new BusinessException("重新获取验证码失败");
+            }
+        }
+        catch (BusinessException e){
+            throw new BusinessException(e.getMessage());
+        }
+        catch (Exception e){
+            throw new BusinessException("系统繁忙，请稍后再试!");
+        }
+
 
     }
 
@@ -626,16 +656,17 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
 
         request.setVerifyCode(verifyCode);
-        String tradeOrderId = cacheService.getTradeOrderId(orderId,type);
-        if(tradeOrderId==null){
-            throw  new BusinessException("支付超时!");
+        //String tradeOrderId = cacheService.getTradeOrderId(orderId, type);
+        PayOrderInfo orderInfo = payOrderDao.getByOrderIdAndType(orderId, type);
+        if(orderInfo==null){
+            throw  new BusinessException("支付异常");
         }
 
-        request.setTradeOrderId(tradeOrderId);
+        request.setTradeOrderId(orderInfo.getTradeOrderId());
         request.setSrcIp(ip);
         request.setSrcChannel("2");
-        request.setReturnUrl(initBean.frontUrl);
-        request.setNotifyUrl(initBean.backNotifyUrl);
+        request.setReturnUrl(initBean.payfrontNotifyUrl);
+        request.setNotifyUrl(initBean.payBackNotifyUrl);
         request.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createTime));
 
         request.setSign("MD5");
@@ -663,6 +694,131 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         }
     }
 
+    /**
+     * 支付回调验证
+     */
+    public void payFrontCallBack(Map<String,String []> params)
+    {
+        payCallBack(params,NotifyType.front_notify);
+    }
+
+    /**
+     * 支付回调验证
+     */
+    public void payBackCallBack(Map<String,String []> params)
+    {
+        payCallBack(params,NotifyType.back_notify);
+    }
+
+
+    private void payCallBack(Map<String, String[]> params , NotifyType  type) {
+
+        logger.info("收到回调"+params+type);
+
+        Map<String,String > paramMap = new HashMap<>();
+        for(Map.Entry<String, String[]> m:params.entrySet()){
+
+            String value = "";
+            if(m.getValue().length>0){
+                value=m.getValue()[0];
+            }
+            paramMap.put(m.getKey(),value);
+        }
+
+        String f_sign = paramMap.get("sign");
+
+        paramMap.remove("sign");
+        String sign = SignService.CalSign(paramMap, initBean.newPayKey);
+
+
+        if (sign.equalsIgnoreCase(f_sign)==false){
+            logger.error("验签失败");
+
+            return ;
+        }
+
+
+        String outOrderId = paramMap.get("outOrderId");
+        String tradeOrderId = paramMap.get("tradeOrderId");
+        String orderState = paramMap.get("orderState");
+        String orderType = paramMap.get("orderType");
+        String payAmount = paramMap.get("payAmount");
+        String payTime = paramMap.get("payTime"); // yyyyMMddHHmmss
+
+        long payAmountl = 0 ;
+
+        try
+        {
+            payAmountl =  Long.parseLong(payAmount);
+        }catch (Exception e){
+
+        }
+
+        Date payDate = null;
+        if(payTime!=null)
+            try {
+                payDate = new SimpleDateFormat("yyyyMMddHHmmss").parse(payTime);
+            } catch (ParseException e) {
+                e.printStackTrace();
+            }
+
+        PayOrderInfo.OrderState payOrderState = null;
+
+
+        PayOrderInfo orderInfo = payOrderDao.getByOrderIdAndTradeOrderId(outOrderId,tradeOrderId);
+
+        if(orderInfo==null){
+            logger.error("没有找到订单");
+            return ;
+        }
+
+        if(type == NotifyType.back_notify) {
+            switch (orderState) {
+                case "1":
+
+                    payOrderState = PayOrderInfo.OrderState.success;
+                    //1订单成功
+                    break;
+                case "2":
+                    payOrderState = PayOrderInfo.OrderState.fail;
+                    //2订单失败
+                    break;
+                case "3":
+                    //3订单异常
+                    payOrderState = PayOrderInfo.OrderState.exceptioned;
+                    break;
+                default:
+
+            }
+            if(payOrderState.state!=orderInfo.getOrderState()) {
+                logger.info("订单状态改变,更新状态");
+                payOrderDao.updateOrderState(orderInfo.getBusOrderId(), MobOrderType.parseInt(orderInfo.getOrderType()), payOrderState);
+            }
+
+            if(payOrderState == PayOrderInfo.OrderState.success ){
+
+                PayNotifyData data = new PayNotifyData();
+                data.payOrderId = tradeOrderId;
+                data.orderId = outOrderId;
+                data.payAmount = payAmountl;
+                data.payTime = payDate;
+
+
+                switch (MobOrderType.parseInt(orderInfo.getOrderType())){
+                    case game_charge:
+                        payNotifyService.gameChargeNotify(data);
+                        break;
+                    case mobile_charge:
+                        payNotifyService.mobileChargeNotify(data);
+                        break;
+                    default:
+                        logger.error("未知类型");
+                }
+            }
+
+        }
+    }
+
 
     /**
      * 支付订单
@@ -672,7 +828,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         try{
             tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
         }catch (Exception e){
-            throw new BusinessException("系统繁忙，请稍后再试");
+            return new PayResult(PayResult.Result.exception,null,0,"系统繁忙，请稍后再试");
         }
 
         B2CRequest payReq = new B2CRequest();
@@ -701,34 +857,65 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         payReq.setBusinessType(orderInfo.getTradeType().type + "");
         payReq.setProductType(2);
 
+
+        switch (orderInfo.getOrderType()){
+            case game_charge:
+                payReq.setPayeeUserId(initBean.GameChargePayeeUserCode);
+                break;
+            case mobile_charge:
+                payReq.setPayeeUserId(initBean.MobileChargePayeeUserCode);
+                break;
+        }
+
+        payReq.setSrcIp(orderInfo.getFromIp());
         payReq.setSign("MD5");
         String sign = SignService.CalSign(payReq,initBean.newPayKey);
         payReq.setSign(sign);
 
         try{
+            PayOrderInfo payOrder = new  PayOrderInfo();
+            payOrder.setOrderType(orderInfo.getOrderType().type);
+            payOrder.setBusOrderId(orderInfo.getOrderId());
+            payOrder.setCreatetime(new Date());
             TradeResponse response = tradeRpcService.b2c(payReq);
             switch (response.getResultCode()){
-                case "3":return new PayResult(PayResult.Result.succ,response.getTradeOrderId(),payReq.getAmount());
+                case "3":
+
+                    payOrder.setTradeOrderId(response.getTradeOrderId());
+
+                    payOrder.setOrderState(PayOrderInfo.OrderState.success.state);
+                    payOrder.setOrderStateDesc(PayOrderInfo.OrderState.success.desc);
+                    payOrder.setLastUpdateTime(null);
+
+                    payOrderDao.newOrder(payOrder);
+                    return new PayResult(PayResult.Result.succ,response.getTradeOrderId(),payReq.getAmount(),"支付成功");
                 case "2":
                 case "1":
-                    cacheService.addNew(orderInfo.getOrderId(),orderInfo.getOrderType(),response.getTradeOrderId());
-                    return new PayResult(PayResult.Result.paying,response.getTradeOrderId(),payReq.getAmount());
+
+                    payOrder.setTradeOrderId(response.getTradeOrderId());
+                    payOrder.setOrderState(PayOrderInfo.OrderState.paying.state);
+                    payOrder.setOrderStateDesc(PayOrderInfo.OrderState.paying.desc);
+                    payOrder.setLastUpdateTime(null);
+
+                    payOrderDao.newOrder(payOrder);
+                    //cacheService.addNew(orderInfo.getOrderId(),orderInfo.getOrderType(),response.getTradeOrderId());
+                    return new PayResult(PayResult.Result.paying,response.getTradeOrderId(),payReq.getAmount(),"支付中");
                 case "4":
-                    return new PayResult(PayResult.Result.fail,response.getTradeOrderId(),0);
+                    return new PayResult(PayResult.Result.fail,response.getTradeOrderId(),0,"失败");
                 case "5":
-                    return new PayResult(PayResult.Result.exception,null,0);
+                    return new PayResult(PayResult.Result.exception,null,0,"系统繁忙");
                 default:
-                    return new PayResult(PayResult.Result.unknow,null,0);
+                    return new PayResult(PayResult.Result.unknow,null,0,"系统繁忙");
             }
 
         }
         catch (BusinessException e){
-            logger.error("支付异常"+e);
-            return new PayResult(PayResult.Result.exception,null,0);
+            logger.error("支付异常"+e.getMessage());
+            return new PayResult(PayResult.Result.exception,null,0,e.getMessage());
         }
         catch (Exception e){
             logger.error("支付异常 异常未知"+e);
-            return new PayResult(PayResult.Result.exception,null,0);
+            return new PayResult(PayResult.Result.exception,null,0,e.getMessage());
         }
 
     }

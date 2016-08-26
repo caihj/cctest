@@ -17,6 +17,11 @@ public interface AccountFacade {
      */
      ChargeOrderInfo createChargeQuckPay(CreateChargeReq data);
 
+    /**
+     * 快捷支付充值重新发送短信
+     */
+
+    ReSendChargeValMsgRsp reSendQuickValMsg(String tradeOrderId ,BusOrderType type,String ip);
 
     /**
      * 快捷支付短信验证
@@ -55,7 +60,7 @@ public interface AccountFacade {
     /**
      * 查询转账订单
      */
-    PageResult<TransferOrderInfo> queryTransferOrder(int pageNo,int pageSize,Date startTime,Date endTime,String orderId);
+    PageResult<TransferOrderInfo> queryTransferOrder(int pageNo,int pageSize,Date startTime,Date endTime,String orderId,String userCode);
 
     /**
      * 查询转账订单
@@ -95,8 +100,13 @@ public interface AccountFacade {
     /**
      *验证 前台通知
      */
-    ValNotifyRsp  valFrontNotify(Map<String, String []> params,NotifyType type);
+    ValNotifyRsp  valFrontNotify(Map<String, String []> params,NotifyOrderType type);
 
+
+    /**
+     *验证 后台通知
+     */
+    ValNotifyRsp  valBackNotify(Map<String, String []> params,NotifyOrderType type);
 
     /**
      * 查询充值订单

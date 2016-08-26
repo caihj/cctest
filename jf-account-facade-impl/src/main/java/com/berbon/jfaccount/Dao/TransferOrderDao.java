@@ -100,15 +100,16 @@ public class TransferOrderDao  {
                         "`orderId`,\n" +
                         "`tradeOrderId`," +
                         " `realName`," +
-                        "`phone`)\n" +
+                        "`phone`," +
+                        "`createUserCode`)\n" +
                         "VALUES\n" +
                         "(" +
                          "?,?,?,?,?,"+
                         "?,?,?,?,?,"+
                         "?,?,?,?,?,"+
                         "?,?,?,?,?,"+
-                        "?,?,?,?,?"+
-                         ")";
+                        "?,?,?,?,?,"+
+                         "?)";
 
                 PreparedStatement ps = con.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
                 int i = 1;
@@ -131,7 +132,7 @@ public class TransferOrderDao  {
                 else
                     ps.setTimestamp(i++, null);
 
-                if(order.getCreateTime()!=null)
+                if(order.getExpireTime()!=null)
                     ps.setTimestamp(i++, new Timestamp(order.getExpireTime().getTime()));
                 else
                     ps.setTimestamp(i++, null);
@@ -145,6 +146,7 @@ public class TransferOrderDao  {
                 ps.setString(i++, order.getTradeOrderId());
                 ps.setString(i++, order.getRealName());
                 ps.setString(i++, order.getPhone());
+                ps.setString(i++, order.getCreateUserCode());
                 return ps;
             }
         }, keyHolder);
@@ -177,11 +179,11 @@ public class TransferOrderDao  {
         return  orderInfo;
     }
 
-    public PageResult<TransferOrderInfo>  queryTransferOrder(int pageNo,int pageSize, java.util.Date startTime, java.util.Date endTime,String orderId){
+    public PageResult<TransferOrderInfo>  queryTransferOrder(int pageNo,int pageSize, java.util.Date startTime, java.util.Date endTime,String orderId,String userCode){
 
         PageResult<TransferOrderInfo> result = new PageResult<TransferOrderInfo>();
-        String sql = "select * from account_transfer_order where 1=1 ";
-        String countSql = "select count(*) from account_transfer_order where 1=1 ";
+        String sql = "select * from account_transfer_order where (`fromUserCode`=\""+userCode+"\" or `toUserCode`=\""+userCode +"\") " ;
+        String countSql = "select count(*) from account_transfer_order where (`fromUserCode`=\""+userCode+"\" or `toUserCode`=\""+userCode +"\") " ;
         if(orderId!=null && orderId.trim().isEmpty()==false){
             sql +=" and `orderId`=\""+orderId+"\"";
 
@@ -191,7 +193,6 @@ public class TransferOrderDao  {
             if(result.listData!=null && result.listData.size()>0){
                 result.total = result.listData.size();
             }
-
         }else{
 
             if(startTime!=null){
@@ -215,6 +216,7 @@ public class TransferOrderDao  {
                 return result;
             }
 
+            sql  +=" order by id desc ";
             sql +=" limit "+start+","+pageSize;
             logger.info("查询转账 sql"+sql);
 
@@ -228,11 +230,11 @@ public class TransferOrderDao  {
 
     public int update(final long id, final int state, final String stateDesc,final String tradeOderNo,final int payType,final String bindNo){
 
-        return slaveTemplate.update(new PreparedStatementCreator() {
+        return masterTemplate.update(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement ps = con.prepareStatement("update account_transfer_order set tradeOrderId=?,state=?" +
-                        "stateDesc=?,callbackTime=?,payType=? where id=?");
+                PreparedStatement ps = con.prepareStatement("update account_transfer_order set tradeOrderId=?,orderState=?," +
+                        "orderStateDesc=?,editTime=?,payType=? where id=?");
 
                 int i=1;
 
@@ -254,11 +256,11 @@ public class TransferOrderDao  {
 
     public int update(final long id, final int state, final String stateDesc){
 
-        return slaveTemplate.update(new PreparedStatementCreator() {
+        return masterTemplate.update(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement ps = con.prepareStatement("update account_transfer_order set state=?" +
-                        "stateDesc=?,callbackTime=? where id=?");
+                PreparedStatement ps = con.prepareStatement("update account_transfer_order set orderState=?," +
+                        "orderStateDesc=?,editTime=? where id=?");
 
                 int i=1;
 

@@ -15,4 +15,6 @@ public class InitBean {
     @Value("${redictUrl}")
     public String redictUrl;
 
+    @Value("${channelId}")
+    public String channelId;
 }

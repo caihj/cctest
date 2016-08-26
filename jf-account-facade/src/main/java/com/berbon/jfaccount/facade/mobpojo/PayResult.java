@@ -9,10 +9,11 @@ public class PayResult implements Serializable{
 
     public  Result result;
 
-    public PayResult(Result result, String payOrderId, long payValue) {
+    public PayResult(Result result, String payOrderId, long payValue, String message) {
         this.result = result;
         this.payOrderId = payOrderId;
         this.payValue = payValue;
+        this.message = message;
     }
 
     public static enum Result {
@@ -26,4 +27,5 @@ public class PayResult implements Serializable{
 
     public String payOrderId;
     public long payValue;
+    public String message;
 }

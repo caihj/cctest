@@ -2,7 +2,9 @@ package com.berbon.jfaccount.Dao;
 
 import com.berbon.jfaccount.pojo.GameChargeOrderInfo;
 import com.berbon.util.mapper.BaseMapper;
+import com.pay1pay.framework.core.spring.Pay1payJdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -13,7 +15,8 @@ import org.springframework.stereotype.Component;
 public class GameChargeOrderDao {
 
     @Autowired
-    private JdbcTemplate gameslaveTemplate;
+    @Qualifier("gameslaveTemplate")
+    private Pay1payJdbcTemplate  gameslaveTemplate;
 
 
     public GameChargeOrderInfo queryOrder(String orderId){

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,6 +30,12 @@ public class MyUtils {
 		String strInput ="data="+data+"&"+"key="+key;
 		return MD5Util.encrypt(strInput, "UTF-8").toUpperCase();
 		
+	}
+
+	public static BigDecimal fen2yuan(long money) {
+		BigDecimal bd = new BigDecimal(money+"");
+		BigDecimal bd100 = new BigDecimal("100");
+		return bd.divide(bd100, 2, BigDecimal.ROUND_HALF_UP);
 	}
 	
 	/**

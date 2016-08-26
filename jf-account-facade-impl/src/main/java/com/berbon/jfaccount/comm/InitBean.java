@@ -11,20 +11,45 @@ import org.springframework.stereotype.Component;
 @Component
 public class InitBean implements InitializingBean {
 
-    @Value("${frontNotifyUrl}")
-    public String frontUrl;
+    /**
+     * 充值前端通知
+     */
+    @Value("${chargefrontNotifyUrl}")
+    public String chargefrontNotifyUrl;
 
-    @Value("${bakNotifyUrl}")
-    public String backNotifyUrl;
+    /**
+     * 充值后端通知
+     */
+    @Value("${chargebackNotifyUrl}")
+    public String chargebackNotifyUrl;
 
     @Value("${newPayKey}")
     public String newPayKey;
 
+    /**
+     * 转账前端通知
+     */
     @Value("${transferNotifyUrl}")
     public String transferNotifyUrl;
 
+    /**
+     * 转账后端通知
+     */
     @Value("${transferbackNotifyUrl}")
     public String transferbackNotifyUrl;
+
+    /**
+     * 交易前端通知
+     */
+    @Value("${payfrontNotifyUrl}")
+    public String payfrontNotifyUrl;
+
+    /**
+     * 交易后端通知
+     */
+    @Value("${payBackNotifyUrl}")
+    public String payBackNotifyUrl;
+
 
     @Value("${channelId}")
     public String channelId="99";
@@ -36,26 +61,21 @@ public class InitBean implements InitializingBean {
     private String __maxChargeOrderAliveSec;
 
 
-    @Value("${chargeBusinessType}")
-    public String chargeBusinessType;
-
-    @Value("${tranferBusinessType}")
-    public String tranferBusinessType;
-
-    @Value("${withdrawBusinessType}")
-    public String withdrawBusinessType;
-
     public int maxChargeOrderAliveSec;
 
 
     /**
      * 话费充值 支付通知 merId
      */
-    public String mobileChargeMerId;
+    public String mobileChargeMerId="1000000008";
 
     /**
-     * 话费充值 支付通知 merId
+     * 游戏充值 支付通知 merId
      */
+    public String gameChargeMerId="1000000008";
+
+
+    @Value("${mobileChargeSignKey}")
     public String mobileChargeSignKey;
 
 
@@ -64,6 +84,20 @@ public class InitBean implements InitializingBean {
      */
     @Value("${MobOrderToTradeOrderIdExistSecods}")
     public int MobOrderToTradeOrderIdExistSecods;
+
+    /**
+     * #话费余额支付收款账号--移动端
+     */
+    @Value("${MobileChargePayeeUserCode}")
+    public String MobileChargePayeeUserCode;
+
+
+    /*
+    游戏余额支付收款账号--移动端
+     */
+    @Value("${GameChargePayeeUserCode}")
+    public String GameChargePayeeUserCode;
+
 
     @Override
     public void afterPropertiesSet() throws Exception {

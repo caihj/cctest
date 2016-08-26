@@ -8,6 +8,6 @@ import javax.servlet.http.HttpServletRequest;
 public class IpTool {
 
     public static String getIp(HttpServletRequest request){
-        return "127.0.0.1";
+        return request.getRemoteAddr();
     }
 }
