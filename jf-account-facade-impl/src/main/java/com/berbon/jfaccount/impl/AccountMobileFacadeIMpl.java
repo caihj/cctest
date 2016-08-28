@@ -408,7 +408,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setSrcChannel("2");
         request.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreatetime()));
         request.setChannelId(initBean.channelId);
-        request.setBusinessType(BusinessType.type_2014.type+"");
+        request.setBusinessType(BusinessType.type_2014.type + "");
         request.setSign("MD5");
         request.setSign(SignService.CalSign(request,initBean.newPayKey));
 
@@ -482,7 +482,18 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
                 logger.info("支付话费充值订单:"+orderId);
 
-                payorder.setDownOrderTime(order.getAdd_time());
+                Date addTime = null;
+                if(order.getAdd_time()!=null)
+                {
+                    try
+                    {
+                        addTime=  new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0").parse(order.getAdd_time());
+                    }catch (Exception e){
+                        logger.error("下单时间异常:"+e.getMessage());
+                    }
+                }
+
+                payorder.setDownOrderTime(addTime);
                 payorder.setAmount(order.getPrice());
                 payorder.setTradeType(BusinessType.type_2002);
                 payorder.setGoodsName("话费充值");
@@ -563,7 +574,11 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 throw new BusinessException("订单状态错误，不能支付");
             }
 
-            createTime = order.getAdd_time();
+            try {
+                createTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0").parse(order.getAdd_time());
+            }catch (Exception e){
+                logger.error("下单时间异常"+e.getMessage());
+            }
             bussOrderNo = orderId;
 
         }else if(type==MobOrderType.game_charge){
@@ -651,7 +666,12 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 throw new BusinessException("订单状态错误，不能支付");
             }
 
-            createTime = order.getAdd_time();
+            try {
+                createTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.0").parse(order.getAdd_time());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
             bussOrderNo = orderId;
 
         }else if(type==MobOrderType.game_charge){
@@ -870,7 +890,9 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         //来源渠道 1网站，2手机，3微信,4内部
         payReq.setSrcChannel("2");
 
-        payReq.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getDownOrderTime()));
+        if(orderInfo.getDownOrderTime()!=null)
+            payReq.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getDownOrderTime()));
+        else
 
         payReq.setIsUsePwd("1");
         payReq.setChannelId(initBean.channelId);

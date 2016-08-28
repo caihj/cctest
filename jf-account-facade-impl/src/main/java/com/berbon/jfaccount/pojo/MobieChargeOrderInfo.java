@@ -18,15 +18,16 @@ public class MobieChargeOrderInfo implements Serializable {
     private long price;
     private int operid;
     private int charge_result;
-    private Date add_time;
-    private Date end_time;
+    private String add_time;
+    private String end_time;
     private int money;
     private String order_id;
-    private Date order_time;
-    private Date refundTime;
+    private String order_time;
+    private String refundTime;
     private String merid;
     private String meraccount;
     private String user_code;
+
 
     public long getId() {
         return id;
@@ -108,19 +109,19 @@ public class MobieChargeOrderInfo implements Serializable {
         this.charge_result = charge_result;
     }
 
-    public Date getAdd_time() {
+    public String getAdd_time() {
         return add_time;
     }
 
-    public void setAdd_time(Date add_time) {
+    public void setAdd_time(String add_time) {
         this.add_time = add_time;
     }
 
-    public Date getEnd_time() {
+    public String getEnd_time() {
         return end_time;
     }
 
-    public void setEnd_time(Date end_time) {
+    public void setEnd_time(String end_time) {
         this.end_time = end_time;
     }
 
@@ -140,19 +141,19 @@ public class MobieChargeOrderInfo implements Serializable {
         this.order_id = order_id;
     }
 
-    public Date getOrder_time() {
+    public String getOrder_time() {
         return order_time;
     }
 
-    public void setOrder_time(Date order_time) {
+    public void setOrder_time(String order_time) {
         this.order_time = order_time;
     }
 
-    public Date getRefundTime() {
+    public String getRefundTime() {
         return refundTime;
     }
 
-    public void setRefundTime(Date refundTime) {
+    public void setRefundTime(String refundTime) {
         this.refundTime = refundTime;
     }
 

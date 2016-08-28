@@ -7,7 +7,6 @@ CONF_DIR=$DEPLOY_DIR/conf
 
 
 SERVER_NAME=`sed '/application.name/!d;s/.*=//' conf/config.properties | tr -d '\r'`
-SERVER_PROTOCOL=`sed 'dubbo.protocols/!d;s/.*=//' conf/config.properties | tr -d '\r'`
 SERVER_PORT=`sed '/protocol.port/!d;s/.*=//' conf/config.properties | tr -d '\r'`
 LOGS_FILE=`sed '/log4j.file/!d;s/.*=//' conf/config.properties | tr -d '\r'`
 
@@ -69,16 +68,8 @@ COUNT=0
 while [ $COUNT -lt 1 ]; do    
     echo -e ".\c"
     sleep 1 
-    if [ -n "$SERVER_PORT" ]; then
-        if [ "$SERVER_PROTOCOL" == "dubbo" ]; then
-    	    COUNT=`echo status | nc -i 1 127.0.0.1 $SERVER_PORT | grep -c OK`
-        else
-            COUNT=`netstat -an | grep $SERVER_PORT | wc -l`
-        fi
-    else
-    	COUNT=`ps -f | grep java | grep "$DEPLOY_DIR" | awk '{print $2}' | wc -l`
-    fi
-    if [ $COUNT -gt 0 ]; then
+    PIDS=`ps aux | grep java | grep "$CONF_DIR" |awk '{print $2}'`
+    if [ -n "$PIDS" ]; then
         break
     fi
 done

@@ -1,4 +1,5 @@
 import com.alibaba.fastjson.JSON;
+import com.berbon.jfaccount.Dao.BusChargeOrderDao;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.AccountMobileFacade;
 import com.berbon.jfaccount.facade.mobpojo.*;
@@ -26,6 +27,13 @@ public class MobilefacadeTest  extends TestCase {
     @Autowired
     AccountMobileFacade mobileFacade;
 
+    @Autowired
+    private BusChargeOrderDao busDao;
+
+    @Test
+    public void t0(){
+        System.out.println(JSON.toJSONString(busDao.queryOrder("03010160828000051")));
+    }
 
     @Test
     public void t1(){
