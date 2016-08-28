@@ -5,6 +5,7 @@ import com.berbon.util.mapper.BaseMapper;
 import com.pay1pay.framework.core.spring.Pay1payJdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -23,6 +24,13 @@ public class GameChargeOrderDao {
 
         String sql = "select * from t_downOrders where downOrderID=\""+ orderId + "\"";
 
-        return gameslaveTemplate.queryForObject(sql,new BaseMapper<GameChargeOrderInfo>(GameChargeOrderInfo.class));
+        GameChargeOrderInfo info = null;
+        try {
+            info = gameslaveTemplate.queryForObject(sql,new BaseMapper<GameChargeOrderInfo>(GameChargeOrderInfo.class));
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+        }
+
+        return info;
     }
 }

@@ -56,7 +56,7 @@ public class WithdrawOrderDao {
                         "`createTime`,\n" +
                         "`state`,\n" +
                         "`stateDesc`,\n" +
-                        "`resultTime`)\n" +
+                        "`resultTime`,`orderId`,`tradOrderId`,`ip`)\n" +
                         "VALUES\n" +
                         "(\n" +
                         "?,\n" +
@@ -66,21 +66,27 @@ public class WithdrawOrderDao {
                         "?,\n" +
                         "?,\n" +
                         "?,\n" +
-                        "?);\n";
+                        "?,?,?,?)\n";
 
-                PreparedStatement preparedStatement = con.prepareStatement("sql");
+                PreparedStatement preparedStatement = con.prepareStatement(sql);
 
                 int i=1;
                 preparedStatement.setString(i++, orderInfo.getUsercode());
                 preparedStatement.setLong(i++, orderInfo.getAmount());
-                preparedStatement.setString(i++,orderInfo.getBindNo());
+                preparedStatement.setString(i++, orderInfo.getBindNo());
                 preparedStatement.setString(i++, orderInfo.getCardNo());
 
                 preparedStatement.setTimestamp(i++, new Timestamp(orderInfo.getCreatetime().getTime()));
                 preparedStatement.setInt(i++, orderInfo.getState());
                 preparedStatement.setString(i++, orderInfo.getStateDesc());
-                preparedStatement.setTimestamp(i++, new Timestamp(orderInfo.getResultTime().getTime()));
+                if(orderInfo.getResultTime()!=null)
+                    preparedStatement.setTimestamp(i++, new Timestamp(orderInfo.getResultTime().getTime()));
+                else
+                    preparedStatement.setTimestamp(i++, null);
 
+                preparedStatement.setString(i++,orderInfo.getOrderId());
+                preparedStatement.setString(i++,orderInfo.getTradOrderId());
+                preparedStatement.setString(i++,orderInfo.getIp());
 
                 return preparedStatement;
             }

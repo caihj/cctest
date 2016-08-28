@@ -64,7 +64,7 @@ public class PayOrderDao {
                 return ps;
 
             }
-        });
+        },keyHolder);
         long id= keyHolder.getKey().longValue();
         orderInfo.setId(id);
 

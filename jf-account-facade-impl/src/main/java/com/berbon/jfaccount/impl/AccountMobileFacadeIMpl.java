@@ -1,5 +1,6 @@
 package com.berbon.jfaccount.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.berbon.jfaccount.Dao.*;
 import com.berbon.jfaccount.Service.PayNotifyService;
 import com.berbon.jfaccount.Service.SignService;
@@ -138,6 +139,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         charge.setBindCardFlag(false);
         charge.setBindNo(req.getBindNo());
         charge.setChannelId(initBean.channelId);
+        charge.setBusinessType(BusinessType.type_2013.type+"");
+        charge.setSrcIp(req.getIp());
         String sign = SignService.CalSign(charge, initBean.newPayKey);
 
         charge.setSign(sign);
@@ -202,7 +205,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             throw new BusinessException("系统繁忙，请稍后再试");
         }
 
-        ChargeOrderInfo orderInfo = chargeOrderDao.getByeTradeOrderNo(orderId);
+        ChargeOrderInfo orderInfo = chargeOrderDao.getByBusOrderNo(orderId);
         if(orderInfo==null){
             logger.error("未找到充值订单");
             throw new BusinessException("订单不存在");
@@ -216,7 +219,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setVerifyCode(verifyCode);
         request.setTradeOrderId(orderInfo.getTradeOrderId());
         request.setAttach("");
-        //no reference
+        request.setSrcIp(ip);
         request.setSrcChannel("2");
         request.setReturnUrl(initBean.chargefrontNotifyUrl);
         request.setNotifyUrl(initBean.chargebackNotifyUrl);
@@ -297,7 +300,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setChannelId(orderInfo.getChannelId());
         request.setBusinessType(BusinessType.type_2014.type + "");
         request.setSignType("MD5");
-        request.setSrcIp(orderInfo.getReference());
+        request.setSrcIp(ip);
         request.setSign(SignService.CalSign(request, initBean.newPayKey));
 
         DoTransferRsp rsp = new DoTransferRsp();
@@ -428,6 +431,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         payorder.setBankId("0000000");
         PayResult result = payOrder(payorder);
 
+        logger.info("余额支付结果:"+ JSON.toJSONString(result));
 
         if(result.result== PayResult.Result.succ){
             //支付成功
@@ -511,12 +515,17 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         //查询bindno
 
         AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+        if(accountRpcService==null){
+            logger.error("获取接口异常");
+            throw new BusinessException("系统繁忙，请稍后再试");
+        }
         BindCardInfo cardinfo = accountRpcService.findCardInfoByBindNo(bindNo);
-        if(cardinfo==null || cardinfo.getUserId().equals(userCode)==false){
+        if(cardinfo==null ){
             throw new BusinessException("银行卡信息错误，支付失败");
         }
 
         payorder.setBankId(cardinfo.getBankId());
+        payorder.setFromIp(ip);
         PayResult result = payOrder(payorder);
         if(result.result!= PayResult.Result.paying){
             throw new BusinessException("支付状态异常,"+result.message);
@@ -555,7 +564,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 throw new BusinessException("未找到订单");
             }
 
-            if(order.getStatus()!=0){
+            if(order.getOrderStatus()!=0){
                 throw new BusinessException("订单状态错误，不能支付");
             }
 
@@ -643,7 +652,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 throw new BusinessException("未找到订单");
             }
 
-            if(order.getStatus()!=0){
+            if(order.getOrderStatus()!=0){
                 throw new BusinessException("订单状态错误，不能支付");
             }
 
@@ -662,6 +671,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             throw  new BusinessException("支付异常");
         }
 
+        request.setOrderId(orderInfo.getBusOrderId());
         request.setTradeOrderId(orderInfo.getTradeOrderId());
         request.setSrcIp(ip);
         request.setSrcChannel("2");
@@ -670,7 +680,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(createTime));
 
         request.setSign("MD5");
-        request.setSign(SignService.CalSign(request,initBean.newPayKey));
+        request.setSign(SignService.CalSign(request, initBean.newPayKey));
+
 
         try {
 
@@ -824,6 +835,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
      * 支付订单
      */
     private PayResult payOrder(MobileOrderInfo orderInfo){
+        logger.info("支付订单, 支付类型"+orderInfo.getPayType());
         TradeRpcService tradeRpcService =null;
         try{
             tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
@@ -837,8 +849,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         if(orderInfo.getPayType()== MobileOrderInfo.PayType.bind_quick_pay){
             payReq.setBindNo(orderInfo.getBindNo());
-            payReq.setBankId(orderInfo.getBankId());
         }
+        payReq.setBankId(orderInfo.getBankId());
 
         payReq.setAmount((int) orderInfo.getAmount());
         payReq.setGoodsName(orderInfo.getGoodsName());
@@ -857,6 +869,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         payReq.setBusinessType(orderInfo.getTradeType().type + "");
         payReq.setProductType(2);
 
+        payReq.setReturnUrl(initBean.payfrontNotifyUrl);
+        payReq.setNotifyUrl(initBean.payBackNotifyUrl);
 
         switch (orderInfo.getOrderType()){
             case game_charge:
@@ -915,6 +929,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         }
         catch (Exception e){
             logger.error("支付异常 异常未知"+e);
+            e.printStackTrace();
             return new PayResult(PayResult.Result.exception,null,0,e.getMessage());
         }
 

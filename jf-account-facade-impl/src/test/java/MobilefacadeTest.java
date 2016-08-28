@@ -45,7 +45,7 @@ public class MobilefacadeTest  extends TestCase {
         GetValMsgReq req = new GetValMsgReq();
         req.setUserId("83986576");
         req.setIp("192.168.1.1");
-        req.setOrderId("CZ16082512442976201");
+        req.setOrderId("CZ16082814012658401");
         req.setPayAmount("100");
         req.setBindNo("");
 
@@ -105,7 +105,7 @@ public class MobilefacadeTest  extends TestCase {
     @Test
     public void t9(){
 
-        mobileFacade.BalancePay("83986576", "03020160825000008", MobOrderType.game_charge, "192.168.1.1");
+        mobileFacade.BalancePay("100102991", "03020160828000006", MobOrderType.game_charge, "192.168.1.1");
     }
 
     @Test

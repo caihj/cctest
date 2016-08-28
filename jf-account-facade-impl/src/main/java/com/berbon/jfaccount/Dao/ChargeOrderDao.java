@@ -6,6 +6,7 @@ import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
 import com.sztx.util.mapper.BaseMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.PreparedStatementCreator;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -138,16 +139,28 @@ public class ChargeOrderDao {
 
         String sql = "select * from account_charge_order where tradeOrderId=\""+tradeOrderId+"\"";
 
-        ChargeOrderInfo order = slaveTemplate.queryForObject(sql,new BaseMapper<ChargeOrderInfo>(ChargeOrderInfo.class));
+        ChargeOrderInfo order = null;
+        try {
+            order = slaveTemplate.queryForObject(sql,new BaseMapper<ChargeOrderInfo>(ChargeOrderInfo.class));
+        } catch (DataAccessException e) {
+            e.printStackTrace();
+        }
 
         return order;
     }
 
     public ChargeOrderInfo getByBusOrderNo(String chargeBussOrderNo){
 
+
         String sql = "select * from account_charge_order where chargeBussOrderNo=\""+chargeBussOrderNo+"\"";
 
-        ChargeOrderInfo order = slaveTemplate.queryForObject(sql,new BaseMapper<ChargeOrderInfo>(ChargeOrderInfo.class));
+        ChargeOrderInfo order;
+        try {
+            order = slaveTemplate.queryForObject(sql, new BaseMapper<ChargeOrderInfo>(ChargeOrderInfo.class));
+        }catch (Exception e){
+            logger.error(e.getMessage());
+            return null;
+        }
 
         return order;
     }
