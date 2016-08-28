@@ -175,13 +175,17 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         ResendQuickVCRequest req = new ResendQuickVCRequest();
 
+        req.setSrcIp(ip);
+        req.setOrderId(orderInfo.getChargeBussOrderNo());
         req.setTradeOrderId(orderInfo.getTradeOrderId());
         req.setSrcChannel("1");
         req.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getCreateTime()));
-        req.setExpireTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getExpireDate()));
+        if(orderInfo.getExpireDate()!=null)
+            req.setExpireTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getExpireDate()));
         req.setSignType("MD5");
         String sign = SignService.CalSign(req,initBean.newPayKey);
         req.setSign(sign);
+
 
         try {
             TradeResponse response = tradeRpcService.resendQuickVC(req);
@@ -226,6 +230,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setOrderTime(orderTime);
         request.setExpireTime(expireTime);
         request.setSignType("MD5");
+        request.setOrderId(orderInfo.getChargeBussOrderNo());
 
         String sign = SignService.CalSign(request, initBean.newPayKey);
 
@@ -238,10 +243,13 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 rsp.setResultMsg(tradeResponse.getResultMsg());
             }
 
-        }catch (Exception e){
+        }catch (BusinessException e){
+            logger.error("发生异常:"+e.getMessage());
             throw new BusinessException(e.getMessage());
+        }catch (Exception e) {
+            e.printStackTrace();
+            throw new BusinessException("系统繁忙，请稍后再试");
         }
-
         return rsp;
     }
 
