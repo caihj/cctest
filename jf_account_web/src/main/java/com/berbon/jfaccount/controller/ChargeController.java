@@ -1,5 +1,6 @@
 package com.berbon.jfaccount.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.berbon.jfaccount.commen.CheckLoginInterceptor;
 import com.berbon.jfaccount.commen.InitBean;
 import com.berbon.jfaccount.commen.JsonResult;
@@ -27,6 +28,8 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 
 /**
@@ -70,11 +73,9 @@ public class ChargeController {
      */
     @RequestMapping(value = "/bindCardAndPay" , method ={ RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    public JsonResult bindQuickPay(HttpServletRequest request) {
-
+    public void bindQuickPay(HttpServletRequest request,HttpServletResponse response) throws IOException {
 
         JsonResult  result =new JsonResult();
-
 
         String bindNo = request.getParameter("bindNo");
         Integer amount = Integer.parseInt(request.getParameter("amount"));
@@ -115,10 +116,17 @@ public class ChargeController {
         data.setIp(IpTool.getIp(request));
 
         CreateChargeRsp rsp = accountFacade.createChargeOrder(data);
+        String payUrl = rsp.getPayUrl();
+        if(payUrl!=null && payUrl.trim().isEmpty()==false && payUrl.contains("www.19fei.com")){
+            response.setCharacterEncoding("GBK");
+        }else
+        {
+            response.setCharacterEncoding("UTF-8");
+        }
         result.setResult(ResultAck.succ);
         result.setData(rsp);
 
-        return result;
+        response.getWriter().write(JSON.toJSONString(result));
     }
 
     @RequestMapping(value = "/resendMsg", method ={ RequestMethod.POST, RequestMethod.GET})

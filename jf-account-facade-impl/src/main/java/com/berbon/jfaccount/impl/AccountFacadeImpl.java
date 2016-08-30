@@ -353,10 +353,23 @@ public class AccountFacadeImpl implements AccountFacade {
     @Override
     public CreateChargeRsp createChargeOrder(CreateChargeReq req) {
 
-        QueryUserInfoService queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
-        TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
-
         CreateChargeRsp rsp = new CreateChargeRsp();
+        QueryUserInfoService queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
+        if(queryUserInfoService==null){
+            logger.error("获取接口 queryUserInfoService，失败");
+            rsp.setResultCode(ErrorCode.sys_busy.code);
+            rsp.setResultMsg(ErrorCode.sys_busy.desc);
+            return rsp;
+        }
+        TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
+        if(tradeRpcService==null){
+            logger.error("获取接口 tradeRpcService，失败");
+            rsp.setResultCode(ErrorCode.sys_busy.code);
+            rsp.setResultMsg(ErrorCode.sys_busy.desc);
+            return rsp;
+        }
+
+
 
         String attach="";
         if(req.getType()==1){
@@ -498,12 +511,21 @@ public class AccountFacadeImpl implements AccountFacade {
             Pair<Integer,String> state = ChargeOrderDao.ChargeCodeToState(response.getResultCode());
             dao.update(orderInfo.getId(),response.getTradeOrderId(),state.first,state.second,req.getType(),req.getCardType(),req.getBindNo(),orderInfo.getAmount());
 
-        }catch (Exception e){
+        }catch (BusinessException e){
+            e.printStackTrace();
             logger.error("支付rpc异常" + e);
             logger.error(e.getMessage());
             e.printStackTrace();
             rsp.setResultCode(ErrorCode.sys_error.code);
             rsp.setResultMsg(e.getMessage());
+        }
+        catch (Exception e){
+            e.printStackTrace();
+            logger.error("支付rpc异常" + e);
+            logger.error(e.getMessage());
+            e.printStackTrace();
+            rsp.setResultCode(ErrorCode.sys_busy.code);
+            rsp.setResultMsg(ErrorCode.sys_busy.desc);
         }
         return  rsp;
     }

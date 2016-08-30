@@ -8,7 +8,8 @@ public enum  ErrorCode {
 
     paypwd_error("101","支付密码错误"),
     sys_error("102","系统异常"),
-    para_error("103","参数错误");
+    para_error("103","参数错误"),
+    sys_busy("104","系统繁忙，请稍后再试");
     ErrorCode(String code,String desc){
         this.code = code;
         this.desc = desc;

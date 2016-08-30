@@ -6,6 +6,7 @@ import com.berbon.common.facade.SmsFacade;
 import com.berbon.common.model.SmsModel;
 import com.berbon.jfaccount.commen.JsonResult;
 import com.berbon.jfaccount.facade.AccountFacade;
+import com.berbon.jfaccount.facade.AccountMobileFacade;
 import com.berbon.jfaccount.facade.pojo.NotifyOrderType;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.jfaccount.facade.pojo.ValNotifyRsp;
@@ -48,11 +49,15 @@ public class NotifyController {
     @Autowired
     private com.sztx.se.rpc.dubbo.source.DynamicDubboClient dubboClient;
 
+    @Autowired
+    private AccountMobileFacade accountMobileFacade;
+
     private AccountFacade accountFacade;
 
     @ModelAttribute
     public void init(){
         accountFacade = dubboClient.getDubboClient("accountFacade");
+        accountMobileFacade = dubboClient.getDubboClient("accountMobileFacade");
     }
 
     @RequestMapping(value = "/chargeBackNotify",method = {RequestMethod.POST,RequestMethod.GET})
@@ -110,7 +115,7 @@ public class NotifyController {
 
         Map<String,String []> params = request.getParameterMap();
         logger.info("收到交易前台回调" + JSONObject.toJSONString(params));
-
+        accountMobileFacade.payFrontCallBack(params);
         response.getWriter().write("OK");
     }
 
@@ -119,8 +124,7 @@ public class NotifyController {
 
         Map<String,String []> params = request.getParameterMap();
         logger.info("收到交易后台回调" + JSONObject.toJSONString(params));
-
-
+        accountMobileFacade.payBackCallBack(params);
 
         response.getWriter().write("OK");
     }
