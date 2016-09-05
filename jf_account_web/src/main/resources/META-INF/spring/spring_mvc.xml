@@ -93,13 +93,14 @@
 			<mvc:mapping path="/orderQuery/*"/>
 			<mvc:mapping path="/transfer/*"/>
 
-			<mvc:exclude-mapping path="/callback/transferResultNotify.htm" />
-			<mvc:exclude-mapping path="/account/transferResultNotify.htm" />
-			<mvc:exclude-mapping path="/callback/transferResultNotify.htm" />
-			<mvc:exclude-mapping path="/account/transferResultNotify.htm" />
 
-			<mvc:exclude-mapping path="/callback/rechargeResultNotify.htm" />
-			<mvc:exclude-mapping path="/account/rechargeResultNotify.htm" />
+			<!--<mvc:exclude-mapping path="/account/rechargeResultNotify.htm" />-->
+			<!--<mvc:exclude-mapping path="/account/transferResultNotify.htm" />-->
+
+			<mvc:exclude-mapping path="/callback/chargeBackNotify.htm" />
+			<mvc:exclude-mapping path="/callback/transferBackNotify.htm" />
+			<mvc:exclude-mapping path="/callback/payFrontNotify.htm" />
+			<mvc:exclude-mapping path="/callback/payBackNotify.htm" />
 
 			<!-- 特殊请求不进行都进行拦截 -->
 			<bean class="com.berbon.jfaccount.commen.CheckLoginInterceptor" />

@@ -203,7 +203,7 @@ public class AccountController {
 
 
         //查询银行卡列表
-        List<BindCardInfo> cards = accountRpcService.queryBindCardList(user.getUserCode(), 0);
+        List<BindCardInfo> cards = accountRpcService.queryBindCardList(user.getUserCode(), 1);
 
 //        //筛选出快捷支付的银行卡
 //        List<BindCardInfo> qPayCards = new ArrayList<>();
@@ -853,7 +853,7 @@ public class AccountController {
             settleType = 10;
         }
 
-        long fee = settleRpcService.calculateHandlingFee(1,settleType,user.getUserCode(),amount);
+        long fee = settleRpcService.calculateHandlingFee(2,settleType,user.getUserCode(),amount,initBean.channelId);
         JSONObject json = new JSONObject();
         json.put("fee",fee);
 

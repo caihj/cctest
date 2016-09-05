@@ -182,8 +182,8 @@ public class TransferOrderDao  {
     public PageResult<TransferOrderInfo>  queryTransferOrder(int pageNo,int pageSize, java.util.Date startTime, java.util.Date endTime,String orderId,String userCode){
 
         PageResult<TransferOrderInfo> result = new PageResult<TransferOrderInfo>();
-        String sql = "select * from account_transfer_order where (`fromUserCode`=\""+userCode+"\" or `toUserCode`=\""+userCode +"\") " ;
-        String countSql = "select count(*) from account_transfer_order where (`fromUserCode`=\""+userCode+"\" or `toUserCode`=\""+userCode +"\") " ;
+        String sql = "select * from account_transfer_order where (`fromUserCode`=\""+userCode+"\" or (`toUserCode`=\""+userCode +"\" and orderState=3 ) ) " ;
+        String countSql = "select count(*) from account_transfer_order where (`fromUserCode`=\""+userCode+"\" or (`toUserCode`=\""+userCode +"\" and orderState=3)) " ;
         if(orderId!=null && orderId.trim().isEmpty()==false){
             sql +=" and `orderId`=\""+orderId+"\"";
 

@@ -879,40 +879,42 @@ public class AccountFacadeImpl implements AccountFacade {
                 return rsp;
             }
 
+
+            //更新订单状态
+            int state;
+            String stateDesc;
+
+            switch (orderState) {
+                case "1":
+                    state = 2;
+                    stateDesc = "成功";
+                    rsp.setCode(ValNotifyRsp.CODE.succ);
+                    rsp.setErrorMsg("成功");
+                    break;
+                case "2":
+                    state = 3;
+                    stateDesc = "失败";
+                    rsp.setCode(ValNotifyRsp.CODE.fail);
+                    rsp.setErrorMsg("失败");
+                    break;
+                case "3":
+                    state = 4;
+                    stateDesc = "未知-异常";
+                    rsp.setCode(ValNotifyRsp.CODE.exception);
+                    rsp.setErrorMsg("回调状态异常");
+                    break;
+                default:
+                    state = 4;
+                    stateDesc = "未知-通知状态错误";
+                    rsp.setCode(ValNotifyRsp.CODE.exception);
+                    rsp.setErrorMsg("回调状态异常");
+            }
+
             if(type == NotifyType.back_notify) {
                 logger.info("更新订单状态:"+outOrderId);
-                //更新订单状态
-                int state;
-                String stateDesc;
-
-                switch (orderState) {
-                    case "1":
-                        state = 2;
-                        stateDesc = "成功";
-                        rsp.setCode(ValNotifyRsp.CODE.succ);
-                        rsp.setErrorMsg("成功");
-                        break;
-                    case "2":
-                        state = 3;
-                        stateDesc = "失败";
-                        rsp.setCode(ValNotifyRsp.CODE.fail);
-                        rsp.setErrorMsg("失败");
-                        break;
-                    case "3":
-                        state = 4;
-                        stateDesc = "未知-异常";
-                        rsp.setCode(ValNotifyRsp.CODE.exception);
-                        rsp.setErrorMsg("回调状态异常");
-                        break;
-                    default:
-                        state = 4;
-                        stateDesc = "未知-通知状态错误";
-                        rsp.setCode(ValNotifyRsp.CODE.exception);
-                        rsp.setErrorMsg("回调状态异常");
-                }
-
                 dao.update(orderInfo.getId(), state, stateDesc);
             }
+
             rsp.setAmount(orderInfo.getAmount());
 
         }else if(notifyOrderType== NotifyOrderType.transfer_notify){

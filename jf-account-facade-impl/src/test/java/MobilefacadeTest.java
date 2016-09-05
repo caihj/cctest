@@ -1,5 +1,6 @@
 import com.alibaba.fastjson.JSON;
 import com.berbon.jfaccount.Dao.BusChargeOrderDao;
+import com.berbon.jfaccount.Dao.TransferOrderDao;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.AccountMobileFacade;
 import com.berbon.jfaccount.facade.mobpojo.*;
@@ -12,6 +13,9 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -29,6 +33,9 @@ public class MobilefacadeTest  extends TestCase {
 
     @Autowired
     private BusChargeOrderDao busDao;
+
+    @Autowired
+    private TransferOrderDao transferOrderDao;
 
     @Test
     public void t0(){
@@ -118,6 +125,16 @@ public class MobilefacadeTest  extends TestCase {
 
     @Test
     public void t10(){
-        mobileFacade.quickPay("83986576", "03020160825000009", MobOrderType.game_charge, "192.168.1.1","");
+        mobileFacade.quickPay("83986576", "03020160825000009", MobOrderType.game_charge, "192.168.1.1", "");
+    }
+
+    @Test
+    public void t11() throws ParseException {
+
+        Date d = new Date();
+
+        Date d1 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-09-01 16:27:00");
+        Object obj = transferOrderDao.queryTransferOrder(1,10,d1,d,"ZZ16082411424624601","83986576");
+        System.out.println(JSON.toJSONString(obj));
     }
 }
