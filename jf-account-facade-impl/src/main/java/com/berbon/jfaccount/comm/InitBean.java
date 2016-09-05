@@ -78,6 +78,9 @@ public class InitBean implements InitializingBean {
     @Value("${mobileChargeSignKey}")
     public String mobileChargeSignKey;
 
+    @Value("${gameChargeSignKey}")
+    public String gameChargeSignKey;
+
 
     /**
      *手机端支付订单映射时间

@@ -634,7 +634,7 @@ public class AccountFacadeImpl implements AccountFacade {
         request.setPayType(pay.getType());
         request.setReceiverType(orderInfo.getReceiverType());
         request.setAmount(orderInfo.getAmount() + "");
-        request.setBindNo(orderInfo.getBindNo());
+        request.setBindNo(pay.getBindNo());
         request.setAttach(orderInfo.getAttach());
         request.setSrcChannel("1");
         request.setReturnUrl(initBean.transferNotifyUrl);

@@ -23,6 +23,7 @@ import com.sztx.pay.center.rpc.api.service.TradeRpcService;
 import com.sztx.pay.center.rpc.api.service.WithdrawAuthRpcService;
 import com.sztx.se.common.exception.BusinessException;
 import com.sztx.se.rpc.dubbo.source.DynamicDubboClient;
+import com.sztx.usercenter.rpc.api.domain.out.UserVO;
 import com.sztx.usercenter.rpc.api.service.QueryUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,7 @@ import java.util.*;
 public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
 
-    private static Logger logger = LoggerFactory.getLogger(AccountFacadeImpl.class);
+    private static Logger logger = LoggerFactory.getLogger(AccountMobileFacadeIMpl.class);
 
     @Autowired
     private InitBean initBean;
@@ -156,6 +157,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             chargeOrderDao.update(orderInfo.getId(),response.getTradeOrderId(),state.first,state.second,1,cardInfo.getCardType(),req.getBindNo(),orderInfo.getAmount());
 
         }catch (Exception e){
+            logger.error("支付异常"+e);
             throw new BusinessException(e.getMessage());
         }
 
@@ -191,7 +193,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             TradeResponse response = tradeRpcService.resendQuickVC(req);
             rsp.setResultCode(response.getResultCode());
             rsp.setResultMsg(response.getResultMsg());
-        }catch (Exception e){
+        }catch (BusinessException e){
+            logger.error("支付异常"+e);
             throw new BusinessException(e.getMessage());
         }
 
@@ -247,7 +250,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             logger.error("发生异常:"+e.getMessage());
             throw new BusinessException(e.getMessage());
         }catch (Exception e) {
-            e.printStackTrace();
+            logger.error("支付异常"+e);
             throw new BusinessException("系统繁忙，请稍后再试");
         }
         return rsp;
@@ -258,6 +261,21 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         CreateTransferOrderRsp rsp = new CreateTransferOrderRsp();
         TransferOrderInfo order = new TransferOrderInfo();
+
+        QueryUserInfoService  queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
+        if(queryUserInfoService==null){
+            throw new BusinessException("系统繁忙，请稍后再试!");
+        }
+
+        UserVO fromuserVO = queryUserInfoService.getUserInfo(req.getPayerUserId());
+        if(fromuserVO == null){
+            throw new BusinessException("转出用户不存在!");
+        }
+
+        UserVO toUesrVo = queryUserInfoService.getUserInfo(req.getPayeeUserId());
+        if(toUesrVo == null){
+            throw new BusinessException("转入用户不存在!");
+        }
 
         order.setOrderId(UtilTool.generateTransferOrderId());
         order.setFromUserCode(req.getPayerUserId());
@@ -339,16 +357,16 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         WithdrawAuthRpcService withdrawAuthRpcService =  dubboClient.getDubboClient("withdrawAuthRpcService");
 
 
-        WithdrawAuthListResponse rsp = withdrawAuthRpcService.getWithDrawAuthByUserId(userCode);
+        WithdrawAuthListResponse rsp = withdrawAuthRpcService.getWithDrawAuthByUserId(userCode,initBean.channelId);
         if(rsp!=null) {
             if (rsp.getStatus() == 1 && rsp.getType() == 2) {
                 return false;
-            } else{
+            } else if(rsp.getStatus() ==1 && rsp.getType() == 1){
                 return true;
             }
         }
 
-        return true;
+        return false;
     }
 
     @Override
@@ -458,6 +476,11 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                     payNotifyService.gameChargeNotify(data);
                     break;
             }
+        }
+
+
+        if(result.result == PayResult.Result.exception){
+            throw new BusinessException(result.message);
         }
 
         return new BalancePayRsp();
@@ -719,8 +742,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 case "2":
                 case "3":
                     return true;
-                case "4":
-                    return false;
+                case "4"://错误
+                    throw  new BusinessException(response.getResultMsg());
                 default:
                     throw  new BusinessException("系统繁忙，请稍后再试");
             }

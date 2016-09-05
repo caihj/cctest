@@ -85,7 +85,7 @@ public class PayNotifyService {
         notifyData.setSignType("MD5");
         notifyData.setVersion("1.0.0");
 
-        notifyData.setSign(notifyData.createSign(initBean.mobileChargeSignKey));
+        notifyData.setSign(notifyData.createSign(initBean.gameChargeSignKey));
 
         String packetId = StringUtil.getSystemUniqueNo();
 

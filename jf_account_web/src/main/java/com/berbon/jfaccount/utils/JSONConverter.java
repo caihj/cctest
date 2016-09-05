@@ -38,7 +38,7 @@ public class JSONConverter extends MappingJackson2HttpMessageConverter {
     protected void writeInternal(Object object, HttpOutputMessage outputMessage)
             throws IOException, HttpMessageNotWritableException {
 
-        String str = JSONObject.toJSONString(object, SerializerFeature.WriteDateUseDateFormat);
+        String str = JSONObject.toJSONString(object, SerializerFeature.WriteDateUseDateFormat,SerializerFeature.WriteMapNullValue);
         outputMessage.getBody().write(str.getBytes("UTF-8"));
     }
 

@@ -222,7 +222,7 @@ public class TransferController {
 
         JsonResult result  = new JsonResult();
 
-        ReSendChargeValMsgRsp rsp = accountFacade.reSendQuickValMsg(tradeOrderId, BusOrderType.charge_order, IpTool.getIp(request));
+        ReSendChargeValMsgRsp rsp = accountFacade.reSendQuickValMsg(tradeOrderId, BusOrderType.transfer_order, IpTool.getIp(request));
 
         result.setResult(ResultAck.succ);
         result.setData(rsp);

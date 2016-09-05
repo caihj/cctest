@@ -49,7 +49,6 @@ public class NotifyController {
     @Autowired
     private com.sztx.se.rpc.dubbo.source.DynamicDubboClient dubboClient;
 
-    @Autowired
     private AccountMobileFacade accountMobileFacade;
 
     private AccountFacade accountFacade;
@@ -61,13 +60,13 @@ public class NotifyController {
     }
 
     @RequestMapping(value = "/chargeBackNotify",method = {RequestMethod.POST,RequestMethod.GET})
-    public void chargeCallBack(HttpServletRequest request){
+    public void chargeCallBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         Map<String,String []> params = request.getParameterMap();
         logger.info("收到充值后台回调"+ JSONObject.toJSONString(params));
 
         accountFacade.valBackNotify(params, NotifyOrderType.charge_notify);
-
+        response.getWriter().write("OK");
     }
 
     @RequestMapping(value = "/transferBackNotify" , method = {RequestMethod.POST,RequestMethod.GET})
