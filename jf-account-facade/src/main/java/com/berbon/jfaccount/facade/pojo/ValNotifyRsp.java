@@ -37,6 +37,15 @@ public class ValNotifyRsp implements Serializable {
      */
     private long  amount;
 
+    private String payeeName;
+
+    public String getPayeeName() {
+        return payeeName;
+    }
+
+    public void setPayeeName(String payeeName) {
+        this.payeeName = payeeName;
+    }
 
     public CODE getCode() {
         return code;

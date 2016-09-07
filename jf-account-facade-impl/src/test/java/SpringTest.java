@@ -45,7 +45,6 @@ public class SpringTest extends TestCase {
     }
 
 
-
     @Test
     public void testUserInfo(){
 

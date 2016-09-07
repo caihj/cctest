@@ -1,6 +1,7 @@
 package com.berbon.jfaccount.controller;
 
 import com.alibaba.fastjson.JSONObject;
+import com.berbon.jfaccount.Service.SysService;
 import com.berbon.jfaccount.commen.*;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.common.PageResult;
@@ -71,6 +72,9 @@ public class AccountController {
 
     @Autowired
     private InitBean initBean;
+
+    @Autowired
+    private SysService sysService;
 
     @ModelAttribute
     public  void init(){
@@ -180,6 +184,7 @@ public class AccountController {
 
         if(rsp.getCode().equals(ValNotifyRsp.CODE.succ)){
             map.put("tradeAmount", MyUtils.fen2yuan(rsp.getAmount()).toString());
+            map.put("payeeName",rsp.getPayeeName());
         }else if(rsp.getCode() == ValNotifyRsp.CODE.fail || rsp.getCode() == ValNotifyRsp.CODE.exception){
             map.put("errorCode", "-1");
             map.put("errorMsg","充值失败,请稍后再试，或联系客服");
@@ -472,6 +477,7 @@ public class AccountController {
             }
 
             QueryOrderRequest queryReq = new QueryOrderRequest();
+            queryReq.setPlatChannelId(initBean.channelId);
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
             queryReq.setPayerAccountId(user.getUserCode());
             if(startD!=null)
@@ -571,9 +577,9 @@ public class AccountController {
 
             if(type!=null && type.trim().isEmpty()==false){
                 if(type.equals("in")){
-                   // queryReq.setTradeOrderType();
+
                 }else if(type.equals("out")){
-                   // queryReq.setTradeOrderType();
+
                 }
             }
 
@@ -581,14 +587,7 @@ public class AccountController {
 
 
             JSONObject json = new JSONObject();
-            /**
-             * pageNo:1,
-             pageSize:10,
-             total:100,
-             rows
-             */
-            //json.put("inAmount", records.getInAmount());
-            //json.put("outAmount", records.getOutAmount());
+
             json.put("pageNo", pageNo);
             json.put("pageSize", pageSize);
             if(records!=null){
@@ -608,16 +607,6 @@ public class AccountController {
 
                     String otherAccount = "";
                     String intOrOut = "";
-
-
-                    //t.get
-
-//                if(t.getUserId().equals(user.getUserCode())){
-//                    otherAccount = t.getPayerUserId();
-//
-//                }else {
-//                    otherAccount = t.getPayeeUserId();
-//                }
 
                     record.setOtherAccount(otherAccount);
 
@@ -673,30 +662,84 @@ public class AccountController {
 
             if(ebankDCSeq!=null){
                 for(BankInfo info:ebankDCSeq){
-                    BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(),1);
+                    if(info.getBankId().equals("1100000")){
+                        continue;
+                    }
+                    BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfo(info.getBankId(),1);
                     ebankDeail.add(new BankInfoDetail(info,limit));
                 }
             }
 
             //快捷支付
-            List<BankInfo> expressDCSeq =null ;
+            List<BankInfo> expressSeq =null ;
             try {
-                expressDCSeq = bankRpcService.findBankList(2);
+                expressSeq = bankRpcService.findBankList(2);
             }catch (Exception e){
                 logger.error("异常"+e.getMessage());
             }
-            List<BankInfoDetail> expressDCSeqDetail = new ArrayList<>();
-            if(expressDCSeq!=null) {
-                for (BankInfo info : expressDCSeq) {
-                    BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfoBySwiftCode(info.getSwiftCode(), 2);
-                    expressDCSeqDetail.add(new BankInfoDetail(info, limit));
+            List<BankInfoDetail> expressSeqDetail = new ArrayList<>();
+            if(expressSeq!=null) {
+                for (BankInfo info : expressSeq) {
+                    BankPayLimitInfo limit = bankPayLimitRpcService.getPayLimitInfo(info.getBankId(), 2);
+                    expressSeqDetail.add(new BankInfoDetail(info, limit));
+                }
+            }
+
+            List<BankInfoDetail>  expressCCSeq = new ArrayList<>();
+            List<BankInfoDetail>  expressDCSeq = new ArrayList<>();
+            for(BankInfoDetail bankinfo:expressSeqDetail){
+
+                if(bankinfo.getCardType()!=null) {
+                    switch (bankinfo.getCardType()) {
+                        case 1:
+                            expressDCSeq.add(new BankInfoDetail(bankinfo));
+                            break;
+
+                        case 2:
+                            expressCCSeq.add(new BankInfoDetail(bankinfo));
+                            break;
+
+                        case 3:
+                            expressDCSeq.add(new BankInfoDetail(bankinfo));
+                            expressCCSeq.add(new BankInfoDetail(bankinfo));
+                            break;
+
+                        default:
+                            break;
+                    }
                 }
             }
 
             Map<String,Object> banks = new HashMap<>();
 
+            if(sysService.useCreditCard()==false){
+                expressCCSeq = new ArrayList<>();
+            }
+
+            List<BankInfoDetail> unionPay = new ArrayList<>();
+            {
+
+                BankInfoDetail infoDetail = new BankInfoDetail();
+
+                infoDetail.setBankId("1100000");
+                infoDetail.setCardType(3);
+                BankPayLimitInfo info = bankPayLimitRpcService.getPayLimitInfo(infoDetail.getBankId(),1);
+
+                if(info!=null){
+                    infoDetail.setBankName(info.getBankName());
+                    if(info.getLimitInfos()!=null){
+                        for(BankPayLimitInfo.LimitInfo t:info.getLimitInfos()){
+                            infoDetail.limitInfo.add(new BankInfoDetail.LimitInfo(t));
+                        }
+                    }
+                }
+                unionPay.add(infoDetail);
+            }
+
             banks.put("ebankDCSeq",ebankDeail);
-            banks.put("expressDCSeq",expressDCSeqDetail);
+            banks.put("expressCCSeq",expressCCSeq);
+            banks.put("expressDCSeq",expressDCSeq);
+            banks.put("unionpay",unionPay);
             banks.put("thirdPay",new ArrayList<>());
 
             result.setData(banks);
@@ -796,7 +839,7 @@ public class AccountController {
 
         Users user = CheckLoginInterceptor.getUsers(request.getSession());
 
-        List<BindCardInfo> cards = accountRpcService.queryBindCardList(user.getUserCode(), 0);
+        List<BindCardInfo> cards = accountRpcService.queryBindCardList(user.getUserCode(), 1);
 
 
         if(cards!=null) {
@@ -826,9 +869,13 @@ public class AccountController {
         JsonResult result = new JsonResult();
         long amount;
         int type;
+        int cardType;
+        String bankId;
         try {
              type =Integer.parseInt(request.getParameter("type"));
              amount = Long.parseLong(request.getParameter("amount"));
+             cardType = Integer.parseInt(request.getParameter("cardType"));
+             bankId = request.getParameter("bankId");
         }catch (Exception e){
             result.setResult(ResultAck.para_error.getCode());
             result.setRetinfo(ResultAck.para_error.getDesc());
@@ -843,17 +890,17 @@ public class AccountController {
 
         Users user = CheckLoginInterceptor.getUsers(request.getSession());
 
-        int settleType = 0;
+        int tradeType = 0;
 
         if(type==1){
-            settleType = 2;
+            tradeType = 2;
         }else  if(type==2){
-            settleType = 8 ;
+            tradeType = 8 ;
         }else if(type==3){
-            settleType = 10;
+            tradeType = 10;
         }
 
-        long fee = settleRpcService.calculateHandlingFee(2,settleType,user.getUserCode(),amount,initBean.channelId);
+        long fee = settleRpcService.calculateHandlingFee(tradeType,1,user.getUserCode(),amount,initBean.channelId,bankId,cardType);
         JSONObject json = new JSONObject();
         json.put("fee",fee);
 

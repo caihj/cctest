@@ -64,15 +64,15 @@ public class InitBean implements InitializingBean {
     public int maxChargeOrderAliveSec;
 
 
-    /**
-     * 话费充值 支付通知 merId
-     */
-    public String mobileChargeMerId="1000000008";
-
-    /**
-     * 游戏充值 支付通知 merId
-     */
-    public String gameChargeMerId="1000000008";
+//    /**
+//     * 话费充值 支付通知 merId
+//     */
+//    public String mobileChargeMerId="1000000008";
+//
+//    /**
+//     * 游戏充值 支付通知 merId
+//     */
+//    public String gameChargeMerId="1000000008";
 
 
     @Value("${mobileChargeSignKey}")

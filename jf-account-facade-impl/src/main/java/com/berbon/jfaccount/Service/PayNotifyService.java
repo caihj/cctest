@@ -37,7 +37,7 @@ public class PayNotifyService {
         NotifyData notifyData = new NotifyData();
 
         notifyData.setCurrency("156");
-        notifyData.setMerId(initBean.mobileChargeMerId);
+        notifyData.setMerId(initBean.MobileChargePayeeUserCode);
         notifyData.setMerOrderId(data.orderId);
         notifyData.setPayOrderId(data.payOrderId);
         notifyData.setPayTime(new SimpleDateFormat("yyyyMMddHHmmss").format(data.payTime));
@@ -74,7 +74,7 @@ public class PayNotifyService {
         NotifyData notifyData = new NotifyData();
 
         notifyData.setCurrency("156");
-        notifyData.setMerId(initBean.gameChargeMerId);
+        notifyData.setMerId(initBean.GameChargePayeeUserCode);
         notifyData.setMerOrderId(data.orderId);
         notifyData.setPayOrderId(data.payOrderId);
         notifyData.setPayTime(new SimpleDateFormat("yyyyMMddHHmmss").format(data.payTime));

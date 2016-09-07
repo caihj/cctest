@@ -6,10 +6,17 @@ import java.util.HashMap;
 
 public class Test3 {
 
-    public HashMap<String, Boolean> map = new HashMap<String, Boolean>();
 
-    public static void main(String[] args) throws IllegalArgumentException, IllegalAccessException, NoSuchFieldException {
 
+    public static void main(String[] args) {
+
+        String a = null;
+        switch (a){
+            case "1":
+                break;
+            default:
+                System.out.println("null");
+        }
 
     }
 }

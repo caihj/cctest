@@ -11,6 +11,7 @@ import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.*;
 import com.berbon.jfaccount.pojo.NotifyType;
+import com.berbon.jfaccount.util.MyUtils;
 import com.berbon.jfaccount.util.Pair;
 import com.berbon.jfaccount.util.UtilTool;
 import com.berbon.util.String.StringUtil;
@@ -231,8 +232,6 @@ public class AccountFacadeImpl implements AccountFacade {
                 }
 
                 orderTime = d.format(chargeOrder.getCreateTime());
-                if(chargeOrder.getExpireDate()!=null)
-                    expireTime = d.format(chargeOrder.getExpireDate());
                 busOrderId = chargeOrder.getChargeBussOrderNo();
                 request.setReturnUrl(initBean.chargefrontNotifyUrl);
                 request.setNotifyUrl(initBean.chargebackNotifyUrl);
@@ -435,7 +434,7 @@ public class AccountFacadeImpl implements AccountFacade {
             }
 
             if(req.getCardType()==2){
-                if (StringUtil.isNotNull(req.getCvv(), req.getExpireDate())){
+                if (StringUtil.isNull(req.getCvv(), req.getExpireDate())){
                     rsp.setResultCode(ErrorCode.para_error.code);
                     rsp.setResultMsg(ErrorCode.para_error.desc);
                     return rsp;
@@ -448,12 +447,9 @@ public class AccountFacadeImpl implements AccountFacade {
                 charge.setRealName(uservo.getRealname());
                 charge.setIdentityNo(uservo.getIdentityid());
 
-                charge.setRealName("蔡海军");
-                charge.setIdentityNo("511602199102223799");
-
             } else {
                 //未实名
-                if (StringUtil.isNotNull(req.getRealName(), req.getIdentityNo(), req.getMobileNo())) {
+                if (StringUtil.isNull(req.getRealName(), req.getIdentityNo(), req.getMobileNo())) {
                     rsp.setResultCode(ErrorCode.para_error.code);
                     rsp.setResultMsg(ErrorCode.para_error.desc);
                     return rsp;
@@ -507,6 +503,7 @@ public class AccountFacadeImpl implements AccountFacade {
             rsp.setAttach(orderInfo.getAttach());
             rsp.setPayUrl(response.getPayUrl());
             rsp.setPayParams(response.getPayParams());
+            rsp.setCodeImgUrl(response.getCodeImgUrl());
 
             Pair<Integer,String> state = ChargeOrderDao.ChargeCodeToState(response.getResultCode());
             dao.update(orderInfo.getId(),response.getTradeOrderId(),state.first,state.second,req.getType(),req.getCardType(),req.getBindNo(),orderInfo.getAmount());
@@ -960,6 +957,7 @@ public class AccountFacadeImpl implements AccountFacade {
                 transferOrderDao.update(orderInfo.getId(), state, stateDesc);
             }
             rsp.setAmount(orderInfo.getAmount());
+            rsp.setPayeeName(MyUtils.markName(orderInfo.getRealName()));
         }
 
 
@@ -970,7 +968,7 @@ public class AccountFacadeImpl implements AccountFacade {
     public ChargeOrderInfo queryChargeOrderInfo(String tradeOrderId) {
 
         try{
-             return    dao.getByeTradeOrderNo(tradeOrderId);
+             return  dao.getByeTradeOrderNo(tradeOrderId);
         }catch (Exception e){
             return null;
         }

@@ -17,6 +17,7 @@ public class CreateChargeRsp implements Serializable{
     private String attach;
     private Map<String, String> payParams;
     private String payUrl;
+    private String codeImgUrl;
 
     public String getResultCode() {
         return resultCode;
@@ -88,5 +89,13 @@ public class CreateChargeRsp implements Serializable{
 
     public void setAttach(String attach) {
         this.attach = attach;
+    }
+
+    public String getCodeImgUrl() {
+        return codeImgUrl;
+    }
+
+    public void setCodeImgUrl(String codeImgUrl) {
+        this.codeImgUrl = codeImgUrl;
     }
 }

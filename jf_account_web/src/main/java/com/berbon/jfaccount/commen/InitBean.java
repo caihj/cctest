@@ -17,4 +17,7 @@ public class InitBean {
 
     @Value("${channelId}")
     public String channelId;
+
+    @Value("${userCreditCard}")
+    public boolean userCreditCard;
 }
