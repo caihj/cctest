@@ -19,5 +19,11 @@
         <property name="isCheck" value="false"/>
     </bean>
 
+    <bean id="queryPayUserInfoService" class="com.sztx.se.rpc.dubbo.client.DubboClient">
+        <property name="interfaceName" value="com.sztx.usercenter.rpc.api.service.QueryPayUserInfoService"/>
+        <property name="protocol" value="dubbo" />
+        <property name="isCheck" value="false" />
+    </bean>
+
 
 </beans>

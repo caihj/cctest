@@ -303,7 +303,7 @@ public class AccountController {
     }
 
 
-    @RequestMapping(value = "/getSalt" , method = RequestMethod.GET)
+    @RequestMapping(value = "/getSalt" , method = { RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
     public JsonResult getSalt(HttpServletRequest request){
         JsonResult result = new JsonResult();
