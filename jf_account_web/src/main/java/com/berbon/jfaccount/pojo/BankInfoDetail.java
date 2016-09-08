@@ -43,8 +43,8 @@ public class BankInfoDetail extends BankInfo {
         this.setSmallLogoUrl(detail.getSmallLogoUrl());
         this.setBigLogoUrl(detail.getBigLogoUrl());
 
-        if(limitInfo!=null ) {
-            for (LimitInfo limit : limitInfo) {
+        if(detail.limitInfo!=null ) {
+            for (LimitInfo limit : detail.limitInfo) {
                 this.limitInfo.add(new LimitInfo(limit));
             }
         }
