@@ -23,7 +23,9 @@ import com.sztx.pay.center.rpc.api.domain.request.QueryOrderRequest;
 import com.sztx.pay.center.rpc.api.domain.response.OrderRecharge;
 import com.sztx.pay.center.rpc.api.domain.response.OrderRechargeList;
 import com.sztx.pay.center.rpc.api.service.*;
+import com.sztx.usercenter.rpc.api.domain.out.UserBaseInfoVO;
 import com.sztx.usercenter.rpc.api.domain.out.UserVO;
+import com.sztx.usercenter.rpc.api.service.QueryPayUserInfoService;
 import com.sztx.usercenter.rpc.api.service.QueryUserInfoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -298,6 +300,28 @@ public class AccountController {
         result.setRetinfo(ResultAck.succ.getDesc());
 
         return result;
+    }
+
+
+    @RequestMapping(value = "/getSalt" , method = RequestMethod.GET)
+    @ResponseBody
+    public JsonResult getSalt(HttpServletRequest request){
+        JsonResult result = new JsonResult();
+
+        try {
+            Users user = CheckLoginInterceptor.getUsers(request.getSession());
+            QueryPayUserInfoService queryPayUserInfoService = dubboClient.getDubboClient("queryPayUserInfoService");
+            UserBaseInfoVO vo = queryPayUserInfoService.getUser(user.getUserCode());
+            String salt = vo.getSalt();
+
+            result.setResult(ResultAck.succ);
+            result.setData(salt);
+        }catch (Exception e){
+            result.setResult(ResultAck.fail);
+            logger.error("发生异常:"+e);
+        }
+
+        return  result;
     }
 
 

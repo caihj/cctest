@@ -69,7 +69,7 @@ public class SignService {
         QueryPayUserInfoService queryPayUserInfoService = dubboClient.getDubboClient("queryPayUserInfoService");
         UserBaseInfoVO vo = queryPayUserInfoService.getUser(userCode);
         String salt = vo.getSalt();
-        String encPwd= DigestUtils.md5Hex(payPwd+salt);
+        String encPwd=payPwd;// DigestUtils.md5Hex(payPwd+salt);
         try {
             queryPayUserInfoService.checkPayPwd(userCode, encPwd, null, 1);
         }catch (Exception e){
