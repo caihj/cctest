@@ -534,7 +534,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             //判断订单状态
             if(order.getOrderStatus()==0){
                 logger.info("支付游戏充值订单:" + orderId);
-                payorder.setDownOrderTime(new Date(order.getOrderCreateTime() * 1000));
+                payorder.setDownOrderTime(new Date(order.getOrderCreateTime()));
 
                 BigDecimal amount = new BigDecimal(order.getTotalMoney());
                 payorder.setAmount(amount.divide(new BigDecimal(10)).longValue());
@@ -614,7 +614,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 throw new BusinessException("订单状态错误，不能支付");
             }
 
-            createTime = new Date(order.getOrderCreateTime()*1000);
+            createTime = new Date(order.getOrderCreateTime());
             bussOrderNo = orderId;
 
         }
@@ -707,7 +707,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 throw new BusinessException("订单状态错误，不能支付");
             }
 
-            createTime = new Date(order.getOrderCreateTime()*1000);
+            createTime = new Date(order.getOrderCreateTime());
             bussOrderNo = orderId;
         }
 
