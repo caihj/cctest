@@ -277,6 +277,16 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             throw new BusinessException("转入用户不存在!");
         }
 
+
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+        boolean isTongxingUser = accountRpcService.checkUserValid(req.getPayeeUserId());
+
+
+        if(isTongxingUser==false){
+            throw new BusinessException("系统升级，暂不支持向此用户转款!");
+        }
+
+
         order.setOrderId(UtilTool.generateTransferOrderId());
         order.setFromUserCode(req.getPayerUserId());
         order.setToUserCode(req.getPayeeUserId());

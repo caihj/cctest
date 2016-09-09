@@ -342,6 +342,18 @@ public class AccountFacadeImpl implements AccountFacade {
             }
         }
 
+
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+        boolean isTongxingUser = accountRpcService.checkUserValid(data.getToUserCode());
+
+
+        if(isTongxingUser==false){
+            rsp.setCanTransfer(false);
+            rsp.setMsg("系统升级，暂不支持向此用户转款!");
+            return rsp;
+        }
+
+
         //检查限额
         rsp.setCanTransfer(true);
         rsp.setMsg("OK");
