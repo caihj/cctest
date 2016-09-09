@@ -580,7 +580,9 @@ public class AccountController {
             if(endDate!=null && endDate.trim().isEmpty()==false){
                 endD = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(endDate+" 23:59:59");
             }else{
-                endD = new Date();
+                Calendar cal2 = Calendar.getInstance();
+                cal2.add(Calendar.DATE,1);
+                endD = cal2.getTime();
             }
 
             UserActFlowRequest queryReq = new UserActFlowRequest();
@@ -596,7 +598,12 @@ public class AccountController {
                 queryReq.setOriginOrderNo(tradeOrderNo);
 
                 queryReq.setStartDate(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-01-01 23:59:59"));
-                queryReq.setEndDate(new Date());
+
+                Calendar cal2 = Calendar.getInstance();
+                cal2.add(Calendar.DATE, 1);
+                cal2.getTime();
+
+                queryReq.setEndDate(cal2.getTime());
             }
 
             if(type!=null && type.trim().isEmpty()==false){
