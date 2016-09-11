@@ -164,12 +164,12 @@ public class AccountFacadeImpl implements AccountFacade {
                 case "3":
                     //成功
                     rsp.setOk(true);
-                    rsp.setMsg("成功");
+                    rsp.setMsg(response.getResultMsg());
                     break;
                 case "4":
                     //失败
                     rsp.setOk(false);
-                    rsp.setMsg("重新获取验证码失败");
+                    rsp.setMsg(response.getResultMsg());
             }
         }
         catch (BusinessException e){
