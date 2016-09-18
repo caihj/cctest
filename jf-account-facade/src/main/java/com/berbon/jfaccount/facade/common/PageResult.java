@@ -9,7 +9,7 @@ import java.util.List;
 public class PageResult<T> implements Serializable {
     public int pageNo;
     public int pageSize;
-    public int total;
+    public long total;
     public List<T> listData;
 
 }

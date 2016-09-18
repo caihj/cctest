@@ -4,6 +4,7 @@ import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.*;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -118,4 +119,16 @@ public interface AccountFacade {
      */
     TransferOrderInfo queryTransferOrderInfo(String tradeOrderId);
 
+
+    /**
+     * 查询历史资金流水记录
+     */
+
+    List<PayFlowData> queryHisPayFlow(int start,int count,Date startDate,Date endDate,String userid,String orderNo);
+
+    /**
+     * 查询总条数
+     */
+
+    long queryHisPayFlowCount(Date startDate,Date endDate,String userid,String orderNo);
 }

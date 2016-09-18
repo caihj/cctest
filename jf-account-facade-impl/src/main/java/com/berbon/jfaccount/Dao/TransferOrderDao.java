@@ -1,6 +1,5 @@
 package com.berbon.jfaccount.Dao;
 
-import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.util.mapper.BaseMapper;

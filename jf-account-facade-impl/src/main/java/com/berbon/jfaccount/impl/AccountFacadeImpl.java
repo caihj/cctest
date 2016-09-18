@@ -3,6 +3,7 @@ package com.berbon.jfaccount.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.Dao.ChargeOrderDao;
 import com.berbon.jfaccount.Dao.TransferOrderDao;
+import com.berbon.jfaccount.Dao.UserActFlowDao;
 import com.berbon.jfaccount.Service.SignService;
 import com.berbon.jfaccount.comm.BusinessType;
 import com.berbon.jfaccount.comm.ErrorCode;
@@ -11,6 +12,7 @@ import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.*;
 import com.berbon.jfaccount.pojo.NotifyType;
+import com.berbon.jfaccount.pojo.UserActFlow;
 import com.berbon.jfaccount.util.MyUtils;
 import com.berbon.jfaccount.util.Pair;
 import com.berbon.jfaccount.util.UtilTool;
@@ -28,10 +30,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Created by chj on 2016/8/5.
@@ -47,6 +46,9 @@ public class AccountFacadeImpl implements AccountFacade {
     private ChargeOrderDao dao;
     @Autowired
     private TransferOrderDao transferOrderDao;
+
+    @Autowired
+    private UserActFlowDao userActFlowDao;
 
     @Autowired
     private DynamicDubboClient dubboClient;
@@ -395,12 +397,12 @@ public class AccountFacadeImpl implements AccountFacade {
 
         if(req.getType()==1 || req.getType()==2){
 
-            boolean passwd = signService.checkUserPayPasswd(req.getUserCode(),req.getPayPwd());
+            Pair<Boolean, String> passwd = signService.checkUserPayPasswd(req.getUserCode(), req.getPayPwd());
 
-            if(passwd==false){
+            if(passwd.first==false){
                 logger.error("支付密码错误");
                 rsp.setResultCode(ErrorCode.paypwd_error.code);
-                rsp.setResultMsg(ErrorCode.paypwd_error.desc);
+                rsp.setResultMsg(passwd.second);
                 return rsp;
             }
         }
@@ -627,12 +629,12 @@ public class AccountFacadeImpl implements AccountFacade {
             return null;
         }
 
-        boolean passwd = signService.checkUserPayPasswd(orderInfo.getCreateUserCode(),pay.getPaypwd());
+        Pair<Boolean, String> passwd = signService.checkUserPayPasswd(orderInfo.getCreateUserCode(), pay.getPaypwd());
 
-        if(passwd==false){
+        if(passwd.first==false){
             logger.error("支付密码错误");
             rsp.setResultCode(ErrorCode.paypwd_error.code);
-            rsp.setResultMsg(ErrorCode.paypwd_error.desc);
+            rsp.setResultMsg(passwd.second);
             return rsp;
         }
 
@@ -696,11 +698,11 @@ public class AccountFacadeImpl implements AccountFacade {
     public UnBindBankCardRsp unBindBankCard(String userCode, String bindNo, String paypwd) {
         UnBindBankCardRsp rsp = new UnBindBankCardRsp();
 
-        boolean isOk =  signService.checkUserPayPasswd(userCode,paypwd);
+        Pair<Boolean, String> isOk =  signService.checkUserPayPasswd(userCode, paypwd);
 
-        if(isOk==false){
+        if(isOk.first==false){
             rsp.setIsOk(false);
-            rsp.setMsg("支付密码错误");
+            rsp.setMsg(isOk.second);
             return  rsp;
         }
 
@@ -754,14 +756,14 @@ public class AccountFacadeImpl implements AccountFacade {
 
         bindReq.setRealName(uservo.getRealname());
         bindReq.setIdentityNo(uservo.getIdentityid());
-        bindReq.setMobileNo(uservo.getMob());
+        bindReq.setMobileNo(req.getMobileNo());
         bindReq.setChannelId(initBean.channelId);
         bindReq.setIsWithdrawCard(0);
 
         String bindNO;
 
         try{
-            bindNO =   accountRpcService.bindCard(bindReq);
+            bindNO = accountRpcService.bindCard(bindReq);
         }catch (Exception e){
             logger.error("绑卡失败,系统异常"+e);
             logger.error("msg:"+e.getMessage());
@@ -995,6 +997,68 @@ public class AccountFacadeImpl implements AccountFacade {
            return null;
        }
     }
+
+    @Override
+    public List<PayFlowData> queryHisPayFlow(int start, int count, Date startDate, Date endDate, String userid, String orderNo) {
+
+        /*
+        B2C_TRADE_ORDER(ReleOrderType,1,"B2C交易"),
+		CHARGE_ORDER(ReleOrderType,2,"充值"),
+		WITHDRAW_ORDER(ReleOrderType,3,"提现"),
+		TRANSFER_ORDER(ReleOrderType,4,"转账"),
+		REFUND_ORDER(ReleOrderType,5,"退款"),
+		SETTLE_ORDER(ReleOrderType,6,"结算"),
+		BANK_PAY_SETTLE(ReleOrderType,7, "支付结算单"),BANK_WITHDRAW_SETTLE(ReleOrderType,8,"提现结算")
+		,BANK_REFUND_SETTLE(ReleOrderType,9,"退款结算"),INTEREST(ReleOrderType,10,"利息"),ACT_MANAGE_FEE(ReleOrderType,11,"账户管理费"),
+		TRANSFER_FEE(ReleOrderType,12,"转账手续费"),PAGER_FEE(ReleOrderType,13,"单据工本费"),REQUISITION(ReleOrderType,14,"资金调拨单"),REPEAT_PAY_REFUND(ReleOrderType,15,"重复支付退款"),
+		OFFLINE_CHARGE(ReleOrderType,16,"线下充值到商户现金账户"),OFFLINE_WITHDRAW(ReleOrderType,17,"线下提现"),
+		DISTRIBUTION_SETTLE_ORDER(ReleOrderType,18,"代发结算订单"),OFFLINE_CHARGE_TO_DEPOSIT(ReleOrderType,19,"线下充值到商户保证金账户"),
+		PARTNER_SETTLE_WITH_TRANSFER_ORDER(ReleOrderType,20,"WIFI商城结算订单"),
+		CHARGE_REFUND_ORDER(ReleOrderType,21,"充值退款"),MANUAL_SETTLE_ORDER(ReleOrderType,22,"人工结算"),
+		FINANCING_PURCHASE_ORDER(ReleOrderType,23,"基金购买"),FINANCING_REDEEM_ORDER(ReleOrderType,24,"基金赎回"),
+		FINANCING_PROFIT_ORDER(ReleOrderType,25,"基金收益");
+
+
+		=>  类型 1 B2C 2充值 3 余额提现 4返利金提现 5 转账 6退款 7 结算 8绑卡 9交易手续费 10结算返利金 11 商户结算 12 灰度用户 13 余额迁移
+         */
+
+        int [][] a =new int[][]{{0,0},{1,1},{2,2},{3,3},{4,5},{5,6},{6,7},{7,7},{8,7},{9,7},{10,7},{11,7},{12,9},{13,9},{14,7},{15,6},{16,2},{17,3},{18,7},{19,7},{20,7},{21,6},{22,7},{23,7},{24,7}};
+
+
+        List<PayFlowData> flows = new ArrayList<>();
+        List<UserActFlow> data = userActFlowDao.query(start, count, startDate, endDate, userid, orderNo);
+        if(data!=null){
+            for(UserActFlow flow:data){
+                PayFlowData d = new PayFlowData();
+
+
+                d.setTradeOrderNo(flow.pay_no);
+                d.setAmount(MyUtils.fen2yuan(flow.tran_amount).toString());
+                d.setBalance(MyUtils.fen2yuan(flow.act_balance).toString());
+                d.setPayDate(flow.trade_time);
+                if(flow.order_type>0 && flow.order_type < a.length)
+                    d.setTradeOrderType(a[flow.order_type][1]);
+                d.setOtherAccount(flow.opposite_side);
+                if(flow.dc_type==1)
+                    d.setType("out");
+                else if(flow.dc_type==2)
+                    d.setType("in");
+
+                flows.add(d);
+
+            }
+        }
+
+        return flows;
+    }
+
+    @Override
+    public long queryHisPayFlowCount( Date startDate, Date endDate, String userid, String orderNo) {
+
+        return userActFlowDao.getCount(startDate,endDate,userid,orderNo);
+    }
+
+
 
 
 }

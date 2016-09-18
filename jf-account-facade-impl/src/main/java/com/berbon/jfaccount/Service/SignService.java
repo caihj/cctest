@@ -1,6 +1,7 @@
 package com.berbon.jfaccount.Service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.berbon.jfaccount.util.Pair;
 import com.berbon.util.MD5.MD5Util;
 import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
@@ -62,7 +63,7 @@ public class SignService {
 
     }
 
-    public boolean checkUserPayPasswd(String userCode,String payPwd){
+    public Pair<Boolean,String> checkUserPayPasswd(String userCode,String payPwd){
 
         logger.info("检验支付密码"+userCode);
 
@@ -74,9 +75,9 @@ public class SignService {
             queryPayUserInfoService.checkPayPwd(userCode, encPwd, null, 1);
         }catch (Exception e){
             logger.error("密码错误"+e);
-            return false;
+            return new Pair<>(false,e.getMessage());
         }
 
-        return  true;
+        return  new Pair<>(true,"成功");
     }
 }

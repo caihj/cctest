@@ -5,10 +5,7 @@ import com.berbon.jfaccount.Service.SysService;
 import com.berbon.jfaccount.commen.*;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.common.PageResult;
-import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
-import com.berbon.jfaccount.facade.pojo.NotifyOrderType;
-import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
-import com.berbon.jfaccount.facade.pojo.ValNotifyRsp;
+import com.berbon.jfaccount.facade.pojo.*;
 import com.berbon.jfaccount.pojo.BankInfoDetail;
 import com.berbon.jfaccount.pojo.CashRecord;
 import com.berbon.jfaccount.pojo.ChargeRecord;
@@ -38,6 +35,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -440,10 +438,10 @@ public class AccountController {
                     String intOrOut;
 
                     if(t.getToUserCode().equals(user.getUserCode())){
-                        otherAccount = t.getFromUserCode();
+                        otherAccount =String.format("%s(%s)",t.getFromUserCode(),t.getRealName());
                         intOrOut = "in";
                     }else {
-                        otherAccount = t.getToUserCode();
+                        otherAccount = String.format("%s(%s)", t.getToUserCode(),t.getRealName());
                         intOrOut = "out";
                     }
 
@@ -479,7 +477,8 @@ public class AccountController {
 
     @RequestMapping(value = "/chargeRecord" ,method = { RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
-    public JsonResult getChargeRecord(HttpServletRequest request){
+    public JsonResult getChargeRecord(HttpServletRequest request)  {
+
 
         JsonResult result = new JsonResult();
 
@@ -560,7 +559,12 @@ public class AccountController {
     public JsonResult querycashRecord(HttpServletRequest request){
         JsonResult result = new JsonResult();
 
+
         try {
+
+            //查询历史流水截止时间
+            Date hisEndTime = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse("2016-09-13 00:00:00");
+
             String pageNo = request.getParameter("pageNo");
             String pageSize = request.getParameter("pageSize");
             String startDate = request.getParameter("startTime");
@@ -569,6 +573,8 @@ public class AccountController {
             String type = request.getParameter("type");
             Date startD = null;
             Date endD = null;
+            int pageNoI = Integer.parseInt(pageNo);
+            int pageSizeI = Integer.parseInt(pageSize);
 
             if(startDate!=null && startDate.trim().isEmpty()==false) {
                 startD =  new SimpleDateFormat("yyyy-MM-dd").parse(startDate);
@@ -588,8 +594,8 @@ public class AccountController {
             UserActFlowRequest queryReq = new UserActFlowRequest();
             Users user = CheckLoginInterceptor.getUsers(request.getSession());
             queryReq.setUserId(user.getUserCode());
-            queryReq.setPageNo(Integer.parseInt(pageNo));
-            queryReq.setPageSize(Integer.parseInt(pageSize));
+            queryReq.setPageNo(pageNoI);
+            queryReq.setPageSize(pageSizeI);
             queryReq.setStartDate(startD);
             queryReq.setEndDate(endD);
             queryReq.setChannelId(initBean.channelId);
@@ -614,18 +620,43 @@ public class AccountController {
                 }
             }
 
-            UserActFlowResponse records = userActFlowRpcService.findUserActFlow(queryReq);
+            long total=0;
 
+            long start = (pageNoI-1)*pageSizeI;
+            long end = start+pageSizeI;
+
+            List<PayFlowData> hisFlow=null;
+
+            UserActFlowResponse records = null;
+            //在此处拼接记录
+            if(startD.getTime() < hisEndTime.getTime()){
+                logger.info("需要查询历史数据");
+
+                records = userActFlowRpcService.findUserActFlow(queryReq);
+                total +=accountFacade.queryHisPayFlowCount(startD,endD,user.getUserCode(),tradeOrderNo);
+                long HisCount = 0;
+                if(records!=null) {
+                    HisCount = records.getTotal();
+                    total += records.getTotal();
+                }
+
+                logger.info(String.format("start:%d end:%s HisCount:%s ",start,end,HisCount));
+
+                if(end <= HisCount){
+
+                }else if(start < HisCount && end > HisCount){
+                    hisFlow=accountFacade.queryHisPayFlow(0, (int) (end-HisCount),startD,endD,user.getUserCode(),tradeOrderNo);
+                }else if(start >= HisCount){
+                    hisFlow=accountFacade.queryHisPayFlow((int) (start-HisCount),pageSizeI,startD,endD,user.getUserCode(),tradeOrderNo);
+                }
+            }
 
             JSONObject json = new JSONObject();
 
-            json.put("pageNo", pageNo);
-            json.put("pageSize", pageSize);
-            if(records!=null){
-                json.put("total", records.getTotal());
-            }else{
-                json.put("total", 0);
-            }
+            json.put("pageNo", pageNoI);
+            json.put("pageSize", pageSizeI);
+            json.put("total", total);
+
 
 
             List<CashRecord> f_records = new ArrayList<>();
@@ -636,7 +667,8 @@ public class AccountController {
                     record.setTradeOrderNo(t.getOriginOrderNo());
                     record.setTradeOrderType(t.getTradeType());
 
-                    String otherAccount = "";
+
+                    String otherAccount =String.format("%s(%s)",t.getOtherUserId(),t.getOtherRealName());
                     String intOrOut = "";
 
                     record.setOtherAccount(otherAccount);
@@ -653,6 +685,23 @@ public class AccountController {
                     record.setType(intOrOut);
                     f_records.add(record);
                 }
+            }
+
+            if(hisFlow!=null){
+                for(PayFlowData data:hisFlow){
+
+                    CashRecord record = new CashRecord();
+                    record.setAmount(data.getAmount());
+                    record.setBalance(data.getBalance());
+                    record.setType(data.getType());
+                    record.setOtherAccount(data.getOtherAccount());
+                    record.setPayDate(data.getPayDate());
+                    record.setTradeOrderNo(data.getTradeOrderNo());
+                    record.setTradeOrderType(data.getTradeOrderType());
+
+                    f_records.add(record);
+                }
+
             }
 
             json.put("payFlows",f_records);

@@ -1,7 +1,11 @@
 import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.Dao.ChargeOrderDao;
+import com.berbon.jfaccount.Dao.UserActFlowDao;
 import com.berbon.jfaccount.Dao.WithdrawOrderDao;
+import com.berbon.jfaccount.facade.AccountFacade;
+import com.berbon.jfaccount.facade.pojo.PayFlowData;
 import com.berbon.jfaccount.facade.pojo.WithdrawOrderInfo;
+import com.berbon.jfaccount.pojo.UserActFlow;
 import com.sztx.se.rpc.dubbo.client.DubboClient;
 import com.sztx.se.rpc.dubbo.client.DubboClientFactory;
 import com.sztx.usercenter.rpc.api.domain.out.UserVO;
@@ -16,7 +20,10 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by chj on 2016/8/10.
@@ -35,9 +42,14 @@ public class SpringTest extends TestCase {
     @Autowired
     private WithdrawOrderDao withdrawOrderDao;
 
+    @Autowired
+    private UserActFlowDao flowDao;
 
     @Autowired
     private DubboClientFactory dubboClient;
+
+
+
 
     @Test
     public void testDao(){
@@ -74,4 +86,41 @@ public class SpringTest extends TestCase {
 
         withdrawOrderDao.newOrder(orderInfo);
     }
+
+
+    @Test
+    public void t1() throws ParseException {
+
+        SimpleDateFormat sd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        flowDao.getCount(sd.parse("2016-08-01 00:00:00"), sd.parse("2016-09-18 23:59:59"), "38828417", "1021201608040000052767");
+
+    }
+
+    @Test
+    public void t2() throws ParseException {
+
+        SimpleDateFormat sd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        List<UserActFlow> flows = flowDao.query(0, 10, sd.parse("2016-08-01 00:00:00"), sd.parse("2016-08-08 23:59:59"), "83986576", "");
+        System.out.println(JSONObject.toJSONString(flows));
+
+    }
+
+    @Autowired
+    private AccountFacade accountFacade;
+
+    @Test
+    public void t3() throws ParseException {
+
+        SimpleDateFormat sd = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        List<PayFlowData> flows = accountFacade.queryHisPayFlow(20, 30, sd.parse("2016-08-01 00:00:00"), sd.parse("2016-08-08 23:59:59"), "83986576", "");
+        System.out.println(JSONObject.toJSONString(flows));
+
+    }
+
+
+
+
 }
