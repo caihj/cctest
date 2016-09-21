@@ -9,6 +9,8 @@ import com.berbon.msgsrv.proxy.pojo.ProxyRequestParam;
 import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
+import nnk.msgsrv.server.MsgSrvLongConnector;
+import nnk.msgsrv.server.conf.ConfBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Base64Utils;
@@ -23,11 +25,10 @@ import java.text.SimpleDateFormat;
 @Component
 public class PayNotifyService {
 
-
     private static  Logger logger = LoggerFactory.getLogger(PayNotifyService.class);
 
     @Autowired
-    private MsgSrvProxyFacade msgSrvProxyFacade;
+    private MsgSrvLongConnector msgSrvLongConnector;
 
     @Autowired
     private InitBean initBean;
@@ -60,11 +61,8 @@ public class PayNotifyService {
             e.printStackTrace();
         }
 
-        ProxyRequestParam param = new ProxyRequestParam(2, packetId, 1, msgsrvCmd);
-
-        String result = msgSrvProxyFacade.getResult(param);
-
-        logger.info("通知结果:"+result);
+        logger.info("通知BerbonMobileChargeNewApp");
+        msgSrvLongConnector.getConnector().send(msgsrvCmd);
 
     }
 
@@ -96,12 +94,8 @@ public class PayNotifyService {
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
-
-        ProxyRequestParam param = new ProxyRequestParam(2, packetId, 1, msgsrvCmd);
-
-        String result = msgSrvProxyFacade.getResult(param);
-
-        logger.info("通知结果:"+result);
+        logger.info("通知GamePayCallClt");
+        msgSrvLongConnector.getConnector().send(msgsrvCmd);
 
     }
 

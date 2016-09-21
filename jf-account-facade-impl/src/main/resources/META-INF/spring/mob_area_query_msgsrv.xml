@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="GBK"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:mvc="http://www.springframework.org/schema/mvc" xmlns:hsf="http://code.pay1pay.com/schema/hsf"
+	xmlns:task="http://www.springframework.org/schema/task"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-4.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://code.pay1pay.com/schema/hsf http://code.pay1pay.com/schema/hsf/hsf.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd">
+
+
+	<bean id="confBean" class="nnk.msgsrv.server.conf.ConfBean">
+		<property name="serverName" value="${msgserver.serverName}" />
+		<property name="appName" value="${msgserver.appName}" />
+		<property name="user" value="${msgserver.username}" />
+	    <property name="pwd" value="${msgserver.password}" />
+	    <!--  <property name="encPwd" value="${msgserver.encPwd}" />  -->
+		<property name="host" value="${msgserver.host}" />
+		<property name="port" value="${msgserver.port}" />
+		<property name="linkTime" value="3000" />
+		<property name="selectorTimeout" value="1000" />
+		<property name="pulseTime" value="600000" />
+
+	</bean>
+	
+	<bean id="msgSrvLongConnector" class="nnk.msgsrv.server.MsgSrvLongConnector" init-method="start">
+	    <constructor-arg ref="confBean"/>
+	</bean>
+
+
+</beans>

@@ -242,6 +242,7 @@
 				<artifactId>mobile-charge-core-facade</artifactId>
 				<version>0.0.1-SNAPSHOT</version>
 			</dependency>
+
 		</dependencies>
 	</dependencyManagement>
 	<!-- 配置远程发布到私服，mvn deploy -->

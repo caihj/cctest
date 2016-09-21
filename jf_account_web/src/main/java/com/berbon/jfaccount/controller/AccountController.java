@@ -434,14 +434,33 @@ public class AccountController {
                     }
 
 
+                    String otherUserName = null;
                     String otherAccount;
                     String intOrOut;
 
                     if(t.getToUserCode().equals(user.getUserCode())){
-                        otherAccount =String.format("%s(%s)",t.getFromUserCode(),t.getRealName());
+
+                        UserVO  otherUser = queryUserInfoService.getUserInfo(t.getFromUserCode());
+                        if(otherUser!=null && otherUser.getRealname()!=null && otherUser.getRealname().trim().isEmpty()==false){
+                            otherUserName = otherUser.getRealname();
+                        }
+
+                        if(otherUserName!=null)
+                            otherAccount =String.format("%s(%s)",t.getFromUserCode() ,otherUserName);
+                        else
+                            otherAccount =String.format("%s",t.getFromUserCode() );
                         intOrOut = "in";
                     }else {
-                        otherAccount = String.format("%s(%s)", t.getToUserCode(),t.getRealName());
+                        UserVO  otherUser = queryUserInfoService.getUserInfo(t.getToUserCode());
+
+                        if(otherUser!=null && otherUser.getRealname()!=null && otherUser.getRealname().trim().isEmpty()==false ){
+                            otherUserName = otherUser.getRealname();
+                        }
+                        if(otherUserName!=null)
+                            otherAccount = String.format("%s(%s)", t.getToUserCode(),otherUserName);
+                        else
+                            otherAccount =String.format("%s",t.getToUserCode());
+
                         intOrOut = "out";
                     }
 
@@ -668,7 +687,7 @@ public class AccountController {
                     record.setTradeOrderType(t.getTradeType());
 
 
-                    String otherAccount =String.format("%s(%s)",t.getOtherUserId(),t.getOtherRealName());
+                    String otherAccount =String.format("%s(%s)",t.getOtherUserId()==null ? "":t.getOtherUserId(),t.getOtherRealName()==null ?"":t.getOtherRealName());
                     String intOrOut = "";
 
                     record.setOtherAccount(otherAccount);
