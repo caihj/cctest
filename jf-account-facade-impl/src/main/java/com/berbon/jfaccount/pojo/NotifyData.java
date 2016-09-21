@@ -1,5 +1,7 @@
 package com.berbon.jfaccount.pojo;
 
+import com.pay1pay.hsf.common.logger.Logger;
+import com.pay1pay.hsf.common.logger.LoggerFactory;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.Serializable;
@@ -10,6 +12,10 @@ import java.util.TreeMap;
 
 
 public class NotifyData implements Serializable {
+
+
+	private static Logger logger = LoggerFactory.getLogger(NotifyData.class);
+
 	private String service = "paynotify";
 	private String version = "1.0.0";
 	private String resultCode;
@@ -149,6 +155,9 @@ public class NotifyData implements Serializable {
 			sb.append(entry.getKey()).append("=").append(entry.getValue());
 		}
 		String preSign = sb.toString() + "&key=";
+
+		logger.info("签名原串:"+preSign);
+
 		return DigestUtils.md5Hex(preSign + key);
 	}
 }
