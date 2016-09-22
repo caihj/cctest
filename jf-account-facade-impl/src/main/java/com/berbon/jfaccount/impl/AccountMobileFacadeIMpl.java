@@ -242,8 +242,16 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         try {
             TradeResponse tradeResponse = tradeRpcService.verifyQuickPay(request);
             if(tradeResponse!=null){
-                rsp.setResultCode(tradeResponse.getResultCode());
-                rsp.setResultMsg(tradeResponse.getResultMsg());
+
+                if(rsp.getResultCode().equals("2") || rsp.getResultCode().equals("3")) {
+                    rsp.setResultCode(tradeResponse.getResultCode());
+                    rsp.setResultMsg(tradeResponse.getResultMsg());
+                }else {
+                    throw new BusinessException(tradeResponse.getResultMsg());
+                }
+
+            }else{
+                throw new BusinessException("系统繁忙，请稍后再试");
             }
 
         }catch (BusinessException e){
