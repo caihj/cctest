@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.Dao.ChargeOrderDao;
 import com.berbon.jfaccount.Dao.TransferOrderDao;
 import com.berbon.jfaccount.Dao.UserActFlowDao;
+import com.berbon.jfaccount.Dao.WithdrawOrderDao;
 import com.berbon.jfaccount.Service.SignService;
 import com.berbon.jfaccount.comm.BusinessType;
 import com.berbon.jfaccount.comm.ErrorCode;
@@ -49,6 +50,9 @@ public class AccountFacadeImpl implements AccountFacade {
 
     @Autowired
     private UserActFlowDao userActFlowDao;
+
+    @Autowired
+    private WithdrawOrderDao withdrawOrderDao;
 
     @Autowired
     private DynamicDubboClient dubboClient;
@@ -972,6 +976,46 @@ public class AccountFacadeImpl implements AccountFacade {
             }
             rsp.setAmount(orderInfo.getAmount());
             rsp.setPayeeName(MyUtils.markName(orderInfo.getRealName()));
+        }else if(notifyOrderType== NotifyOrderType.withdraw_notify){
+
+            WithdrawOrderInfo orderInfo = withdrawOrderDao.getByOrderId(outOrderId);
+            if(orderInfo==null){
+                logger.error("订单未找到");
+                return rsp;
+            }
+            if(type == NotifyType.back_notify) {
+                //更新订单状态
+                int state;
+                String stateDesc;
+
+                switch (orderState) {
+                    case "1":
+                        state = 2;
+                        stateDesc = "成功";
+                        rsp.setCode(ValNotifyRsp.CODE.succ);
+                        rsp.setErrorMsg("成功");
+                        break;
+                    case "2":
+                        state = 3;
+                        stateDesc = "失败";
+                        rsp.setCode(ValNotifyRsp.CODE.fail);
+                        rsp.setErrorMsg("失败");
+                        break;
+                    case "3":
+                        state = 4;
+                        stateDesc = "未知-异常";
+                        rsp.setCode(ValNotifyRsp.CODE.exception);
+                        rsp.setErrorMsg("回调状态异常");
+                        break;
+                    default:
+                        state = 4;
+                        stateDesc = "未知-通知状态错误";
+                        rsp.setCode(ValNotifyRsp.CODE.exception);
+                        rsp.setErrorMsg("回调状态异常");
+                }
+
+                withdrawOrderDao.update(orderInfo.getId(), state, stateDesc);
+            }
         }
 
 

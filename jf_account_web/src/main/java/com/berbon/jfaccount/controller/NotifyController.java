@@ -128,4 +128,13 @@ public class NotifyController {
         response.getWriter().write("OK");
     }
 
+    @RequestMapping(value = "/withDrawBackNotify",method = {RequestMethod.POST,RequestMethod.GET})
+    public void withDrawCallBack(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+        Map<String,String []> params = request.getParameterMap();
+        logger.info("收到提现后台回调"+ JSONObject.toJSONString(params));
+
+        accountFacade.valBackNotify(params, NotifyOrderType.charge_notify);
+        response.getWriter().write("OK");
+    }
 }

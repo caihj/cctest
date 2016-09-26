@@ -416,13 +416,20 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         TradeRpcService tradeRpcService = dubboClient.getDubboClient("tradeRpcService");
 
+        AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
+
+        BindCardInfo cardInfo = accountRpcService.findCardInfoByBindNo(req.getBindNo());
+        if(cardInfo == null)
+        {
+            throw new BusinessException("银行卡信息错误");
+        }
 
         WithdrawOrderInfo orderInfo = new WithdrawOrderInfo();
         orderInfo.setOrderId(UtilTool.generateWithdrawOrderId());
         orderInfo.setUsercode(req.getUserId());
         orderInfo.setAmount(req.getAmount());
         orderInfo.setBindNo(req.getBindNo());
-        //orderInfo.setCardNo();
+        orderInfo.setCardNo(cardInfo.getCardNo());
         orderInfo.setCreatetime(new Date());
         orderInfo.setState(WithdrawOrderDao.OrderState.init.state);
         orderInfo.setStateDesc(WithdrawOrderDao.OrderState.init.desc);
@@ -440,6 +447,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setOrderId(orderInfo.getOrderId());
         request.setAmount((int) orderInfo.getAmount());
         request.setSrcIp(req.getIp());
+
+        request.setNotifyUrl(initBean.WithDrawBackNotifyUrl);
 
         request.setSrcChannel("2");
         request.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreatetime()));

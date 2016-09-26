@@ -101,6 +101,11 @@ public class InitBean implements InitializingBean {
     @Value("${GameChargePayeeUserCode}")
     public String GameChargePayeeUserCode;
 
+    /*
+    提现回调地址
+     */
+    @Value("${withDrawBackNotifyUrl}")
+    public String WithDrawBackNotifyUrl;
 
     @Override
     public void afterPropertiesSet() throws Exception {

@@ -1,6 +1,8 @@
 package com.berbon.jfaccount.Dao;
 
+import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.jfaccount.facade.pojo.WithdrawOrderInfo;
+import com.berbon.util.mapper.BaseMapper;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,5 +97,36 @@ public class WithdrawOrderDao {
         return orderInfo;
     }
 
+    public WithdrawOrderInfo getByOrderId(String orderId){
+        String sql = "select * from account_withdraw_order where `orderId`=\""+orderId+"\"";
+        WithdrawOrderInfo orderInfo;
+        try{
+            orderInfo  = slaveTemplate.queryForObject(sql,new BaseMapper<WithdrawOrderInfo>(WithdrawOrderInfo.class));
+        }catch (Exception e){
+            return  null;
+        }
+        return  orderInfo;
+    }
 
+    public int update(final long id, final int state, final String stateDesc){
+
+        return masterTemplate.update(new PreparedStatementCreator() {
+            @Override
+            public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+                PreparedStatement ps = con.prepareStatement("update account_withdraw_order set state=?," +
+                        "stateDesc=?,resultTime=now() where id=?");
+
+                int i=1;
+
+                ps.setInt(i++, state);
+                ps.setString(i++, stateDesc);
+
+                ps.setLong(i++,id);
+
+                return ps;
+            }
+        });
+
+
+    }
 }
