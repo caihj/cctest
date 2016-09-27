@@ -2,9 +2,10 @@ package com.berbon.jfaccount.Dao;
 
 import com.berbon.jfaccount.facade.pojo.ChargeOrderInfo;
 import com.berbon.jfaccount.util.Pair;
+import com.berbon.util.mapper.BaseMapper;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
-import com.sztx.util.mapper.BaseMapper;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;

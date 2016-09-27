@@ -134,7 +134,7 @@ public class NotifyController {
         Map<String,String []> params = request.getParameterMap();
         logger.info("收到提现后台回调"+ JSONObject.toJSONString(params));
 
-        accountFacade.valBackNotify(params, NotifyOrderType.charge_notify);
+        accountFacade.valBackNotify(params, NotifyOrderType.withdraw_notify);
         response.getWriter().write("OK");
     }
 }
