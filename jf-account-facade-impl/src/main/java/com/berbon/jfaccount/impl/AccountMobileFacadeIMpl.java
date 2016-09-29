@@ -453,7 +453,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         request.setSrcChannel("2");
         request.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreatetime()));
         request.setChannelId(initBean.channelId);
-        request.setBusinessType(BusinessType.type_2014.type + "");
+        request.setBusinessType(BusinessType.type_2017.type + "");
         request.setSign("MD5");
         request.setSign(SignService.CalSign(request,initBean.newPayKey));
 

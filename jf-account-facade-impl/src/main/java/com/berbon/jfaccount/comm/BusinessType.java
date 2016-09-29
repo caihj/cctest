@@ -40,7 +40,8 @@ public enum BusinessType {
   type_2013(2013,"缴费商充值"),
   type_2014(2014,"缴费商转账"),
   type_2015(2015,"缴费商佣金转入"),
-  type_2016(2016,"缴费商佣金转出");
+  type_2016(2016,"缴费商佣金转出"),
+  type_2017(2017,"缴费金提现");
 
   BusinessType(int type,String desc){
    this.type = type;

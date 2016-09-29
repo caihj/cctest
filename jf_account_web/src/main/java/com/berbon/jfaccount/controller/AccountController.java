@@ -548,6 +548,7 @@ public class AccountController {
                 record.setAddTime(t.getAddTime());
                 record.setRechargeOrderId(t.getOrderId());
                 record.setRechargeChannelStr(t.getRechargeChannelStr());
+                record.setRechargeChannelStr(t.getPayTypeStr());
                 record.setRechargeAmount(t.getRechargeAmount().doubleValue()+"");
                 record.setRechargeStatusStr(t.getRechargeStatusStr());
 
