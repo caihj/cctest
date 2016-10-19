@@ -122,7 +122,7 @@
         <dependency>
             <groupId>com.sztx.systemframework</groupId>
             <artifactId>se</artifactId>
-            <version>1.2.2</version>
+            <version>1.2.3</version>
             <exclusions>
                 <exclusion>
                     <groupId>org.springframework</groupId>

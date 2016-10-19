@@ -350,7 +350,7 @@ public class AccountFacadeImpl implements AccountFacade {
 
 
         AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
-        boolean isTongxingUser = accountRpcService.checkUserValid(data.getToUserCode());
+        boolean isTongxingUser =true;// accountRpcService.checkUserValid(data.getToUserCode());
 
 
         if(isTongxingUser==false){
