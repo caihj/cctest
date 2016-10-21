@@ -1014,7 +1014,7 @@ public class AccountFacadeImpl implements AccountFacade {
                         rsp.setErrorMsg("回调状态异常");
                 }
 
-                withdrawOrderDao.update(orderInfo.getId(), state, stateDesc);
+                withdrawOrderDao.update(orderInfo.getId(), state, stateDesc, tradeOrderId);
             }
         }
 

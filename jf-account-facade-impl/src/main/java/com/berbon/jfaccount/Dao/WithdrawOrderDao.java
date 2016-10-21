@@ -108,16 +108,17 @@ public class WithdrawOrderDao {
         return  orderInfo;
     }
 
-    public int update(final long id, final int state, final String stateDesc){
+    public int update(final long id, final int state, final String stateDesc, final String tranOrderId){
 
         return masterTemplate.update(new PreparedStatementCreator() {
             @Override
             public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
-                PreparedStatement ps = con.prepareStatement("update account_withdraw_order set state=?," +
+                PreparedStatement ps = con.prepareStatement("update account_withdraw_order set tradOrderId=?, state=?," +
                         "stateDesc=?,resultTime=now() where id=?");
 
                 int i=1;
 
+                ps.setString(i++, tranOrderId);
                 ps.setInt(i++, state);
                 ps.setString(i++, stateDesc);
 
