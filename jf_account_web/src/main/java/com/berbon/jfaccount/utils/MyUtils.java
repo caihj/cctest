@@ -13,9 +13,6 @@ import javax.servlet.http.HttpServletRequest;
 
 
 
-import com.berbon.ordersystem.pojo.BerbonOrder;
-import com.berbon.ordersystem.pojo.CommonConstant;
-import com.berbon.ordersystem.pojo.OrderStateMapping;
 import com.berbon.util.MD5.MD5Util;
 
 public class MyUtils {
@@ -44,45 +41,7 @@ public class MyUtils {
 	 * @return
 	 */
 	
-	public static Integer handleFuelState(BerbonOrder berbonOrder){
-		if (berbonOrder.getRefundState().equals(CommonConstant.refund_success)) {
-			return OrderState.REFUND_SUCCESS;
-		}
-		if (berbonOrder.getRefundState().equals(CommonConstant.refund_handling)) {
-			return OrderState.REFUNDING;
-		}
-		if (berbonOrder.getRefundState().equals(CommonConstant.refund_fail)) {
-			return OrderState.REFUND_FAILD;
-		}
-		if (berbonOrder.getRefundState().equals(CommonConstant.refund_unknown)) {
-			return OrderState.UNKONE_REFUND;
-		}
-		if (berbonOrder.getPayState().equals(CommonConstant.unpay)) {
-			return OrderState.NOTPAY;
-		}
-		if (berbonOrder.getPayState().equals(CommonConstant.failPay)) {
-			return OrderState.PAY_FAILD;
-		}
-		if (berbonOrder.getPayState().equals(CommonConstant.paying)) {
-			return OrderState.PAYING;
-		}
-		if (berbonOrder.getPayState().equals(CommonConstant.unknownPay)) {
-			return OrderState.UNKONE_PAY;
-		}
-		if (berbonOrder.getOrderState().equals(OrderStateMapping.order_success.getOrderState())) {
-			return OrderState.CHARGE_SUCCESS;
-		}
-		if (berbonOrder.getOrderState().equals(OrderStateMapping.order_handling.getOrderState())) {
-			return OrderState.CHARGEING;
-		}
-		if (berbonOrder.getOrderState().equals(OrderStateMapping.order_fail.getOrderState())) {
-			return OrderState.CHARGE_FAILD;
-		}
-		if (berbonOrder.getOrderState().equals(OrderStateMapping.order_start.getOrderState())) {
-			return OrderState.NOTPAY;
-		}
-		return OrderState.UNKONE_CHARGEING;
-	}
+
 	
 	
 	/**

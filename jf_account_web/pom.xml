@@ -102,40 +102,12 @@
 			<groupId>com.berbon.user</groupId>
 			<artifactId>berbon-user-facade</artifactId>
 		</dependency>
-		<!--订单系统 -->
-		<dependency>
-			<groupId>com.berbon.ordersystem</groupId>
-			<artifactId>berbon-ordersystem-facade</artifactId>
-		</dependency>
-		<!--加油卡 -->
-		<dependency>
-			<groupId>com.berbon.fuelcard</groupId>
-			<artifactId>berbon-fuelcard-facade</artifactId>
-		</dependency>
 		<!--msgrv代理 -->
 		<dependency>
 			<groupId>com.berbon.msgsrv.proxy</groupId>
 			<artifactId>msgsrv-proxy-facade</artifactId>
 		</dependency>
-		<!--流量充值 -->
-		<dependency>
-			<groupId>com.berbon.mobile.data</groupId>
-			<artifactId>berbon-mobiledata-facade</artifactId>
-		</dependency>
-		<!-- 宽带缴费 -->
-		<dependency>
-			<groupId>com.berbon.broadband</groupId>
-			<artifactId>berbon-newbroadband-facade</artifactId>
-		</dependency>
-		<!--批量充值 -->
-		<dependency>
-			<groupId>com.berbon.mobilebatchcharge</groupId>
-			<artifactId>mobile-charge-batchcharge-facade</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>com.berbon.mobcharge</groupId>
-			<artifactId>mobile-charge-core-facade</artifactId>
-		</dependency>
+
 		<!-- <dependency> <groupId>com.sun.java</groupId> <artifactId>tools</artifactId> 
 			</dependency> -->
 		<!--excel 读写 -->
