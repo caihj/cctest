@@ -762,7 +762,9 @@ public class AccountFacadeImpl implements AccountFacade {
         bindReq.setIdentityNo(uservo.getIdentityid());
         bindReq.setMobileNo(req.getMobileNo());
         bindReq.setChannelId(initBean.channelId);
-        bindReq.setIsWithdrawCard(0);
+        if("1".equals(req.getCardType())) {
+            bindReq.setIsWithdrawCard(1);
+        }
 
         String bindNO;
 

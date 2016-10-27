@@ -83,8 +83,7 @@ public class NotifyController {
                 TransferOrderInfo orderInfo = accountFacade.queryTransferDetail(orderId[0]);
                 if (orderInfo != null) {
                     //发送短信
-                    if (orderInfo.getPhone() != null && orderInfo.getPhone().trim().isEmpty() == false
-                            && orderInfo.getAttach() != null && orderInfo.getAttach().trim().isEmpty() == false) {
+                    if (orderInfo.getPhone() != null && orderInfo.getPhone().trim().isEmpty() == false) {
 
                         SmsSendTemplateRequest smsRequest = new SmsSendTemplateRequest();
 
@@ -93,10 +92,15 @@ public class NotifyController {
                         smsRequest.setInstallId(instannId);
                         smsRequest.setCmd(JIAOFEI_TRANSFER_RESULT_NOFITY);
 
+                        String attach = orderInfo.getAttach();
+                        if(attach==null){
+                            attach="";
+                        }
+
                         /**
                          * 您收到来自%s的转款 %s元，附言：%s
                          */
-                        String[] argArr = new String[]{orderInfo.getFromUserCode(), MyUtils.fen2yuan(orderInfo.getAmount()).toString(), orderInfo.getAttach()};
+                        String[] argArr = new String[]{orderInfo.getFromUserCode(), MyUtils.fen2yuan(orderInfo.getAmount()).toString(), attach};
                         smsRequest.setTemplateArray(argArr);
                         logger.info("发送短信:" + JSON.toJSONString(smsRequest));
 
