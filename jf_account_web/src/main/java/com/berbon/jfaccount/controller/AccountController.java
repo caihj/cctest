@@ -669,6 +669,11 @@ public class AccountController {
                 }else if(start >= HisCount){
                     hisFlow=accountFacade.queryHisPayFlow((int) (start-HisCount),pageSizeI,startD,endD,user.getUserCode(),tradeOrderNo);
                 }
+            }else{
+                records = userActFlowRpcService.findUserActFlow(queryReq);
+                if(records!=null) {
+                    total += records.getTotal();
+                }
             }
 
             JSONObject json = new JSONObject();
@@ -677,33 +682,33 @@ public class AccountController {
             json.put("pageSize", pageSizeI);
             json.put("total", total);
 
-
-
             List<CashRecord> f_records = new ArrayList<>();
-            if(records.getUserActFlowS()!=null) {
-                for (UserActFlowResponse.UserActFlow t : records.getUserActFlowS()) {
-                    CashRecord record = new CashRecord();
-                    record.setPayDate(t.getTradeTime());
-                    record.setTradeOrderNo(t.getOriginOrderNo());
-                    record.setTradeOrderType(t.getTradeType());
+            if(records!=null) {
+                if (records.getUserActFlowS() != null) {
+                    for (UserActFlowResponse.UserActFlow t : records.getUserActFlowS()) {
+                        CashRecord record = new CashRecord();
+                        record.setPayDate(t.getTradeTime());
+                        record.setTradeOrderNo(t.getOriginOrderNo());
+                        record.setTradeOrderType(t.getTradeType());
 
 
-                    String otherAccount =String.format("%s(%s)",t.getOtherUserId()==null ? "":t.getOtherUserId(),t.getOtherRealName()==null ?"":t.getOtherRealName());
-                    String intOrOut = "";
+                        String otherAccount = String.format("%s(%s)", t.getOtherUserId() == null ? "" : t.getOtherUserId(), t.getOtherRealName() == null ? "" : t.getOtherRealName());
+                        String intOrOut = "";
 
-                    record.setOtherAccount(otherAccount);
+                        record.setOtherAccount(otherAccount);
 
-                    record.setAmount(MyUtils.fen2yuan(Math.abs(t.getTranAmount())).toString());
-                    record.setBalance(MyUtils.fen2yuan(t.getActBalance()).toString());
+                        record.setAmount(MyUtils.fen2yuan(Math.abs(t.getTranAmount())).toString());
+                        record.setBalance(MyUtils.fen2yuan(t.getActBalance()).toString());
 
 
-                    if (t.getTranAmount() < 0) {
-                        intOrOut = "out";
-                    } else {
-                        intOrOut = "in";
+                        if (t.getTranAmount() < 0) {
+                            intOrOut = "out";
+                        } else {
+                            intOrOut = "in";
+                        }
+                        record.setType(intOrOut);
+                        f_records.add(record);
                     }
-                    record.setType(intOrOut);
-                    f_records.add(record);
                 }
             }
 
