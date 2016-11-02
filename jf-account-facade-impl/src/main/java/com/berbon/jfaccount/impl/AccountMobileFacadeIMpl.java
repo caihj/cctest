@@ -546,8 +546,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                 payorder.setDownOrderTime(addTime);
                 payorder.setAmount(order.getPrice());
                 payorder.setTradeType(BusinessType.type_2002);
-                payorder.setGoodsName("话费充值");
-                payorder.setGoodsDetail("话费充值"+order.getMob());
+                payorder.setGoodsName("mobcharge");
+                payorder.setGoodsDetail("话费充值:"+order.getMob());
 
             }else {
                 throw new BusinessException("订单状态错误，不能支付");

@@ -338,7 +338,7 @@ public class AccountFacadeImpl implements AccountFacade {
             return rsp;
         }
 
-        logger.info("转入账户用户信息"+JSONObject.toJSONString(toUser));
+        logger.info("转入账户用户信息" + JSONObject.toJSONString(toUser));
 
         if(toUser.getRealname()!=null){
             if(toUser.getRealname().equals(data.getRealName())==false){
@@ -429,7 +429,7 @@ public class AccountFacadeImpl implements AccountFacade {
         charge.setNotifyUrl(initBean.chargebackNotifyUrl);
         charge.setOrderTime(new SimpleDateFormat("yyyyMMddHHmmss").format(orderInfo.getCreateTime()));
         charge.setSignType("MD5");
-        charge.setBusinessType(BusinessType.type_2013.type+"");
+        charge.setBusinessType(BusinessType.type_2013.type + "");
         charge.setChannelId(initBean.channelId);
         charge.setSrcIp(req.getIp());
         charge.setSrcChannel("1");
@@ -659,7 +659,7 @@ public class AccountFacadeImpl implements AccountFacade {
             request.setExpireTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getExpireTime()));
         request.setIsUsePwd(orderInfo.getIsUsePwd() + "");
         request.setChannelId(orderInfo.getChannelId());
-        request.setBusinessType(BusinessType.type_2014.type+"");
+        request.setBusinessType(BusinessType.type_2014.type + "");
         request.setSignType("MD5");
         request.setSrcIp(pay.getIp());
 
@@ -764,6 +764,8 @@ public class AccountFacadeImpl implements AccountFacade {
         bindReq.setChannelId(initBean.channelId);
         if("1".equals(req.getCardType())) {
             bindReq.setIsWithdrawCard(1);
+        }else{
+            bindReq.setIsWithdrawCard(0);
         }
 
         String bindNO;
