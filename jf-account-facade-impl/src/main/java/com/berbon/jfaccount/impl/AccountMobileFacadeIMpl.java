@@ -243,7 +243,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
             TradeResponse tradeResponse = tradeRpcService.verifyQuickPay(request);
             if(tradeResponse!=null){
 
-                if(rsp.getResultCode().equals("2") || rsp.getResultCode().equals("3")) {
+                if(tradeResponse.getResultCode().equals("2") || tradeResponse.getResultCode().equals("3")) {
                     rsp.setResultCode(tradeResponse.getResultCode());
                     rsp.setResultMsg(tradeResponse.getResultMsg());
                 }else {
