@@ -191,8 +191,14 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         try {
             TradeResponse response = tradeRpcService.resendQuickVC(req);
-            rsp.setResultCode(response.getResultCode());
-            rsp.setResultMsg(response.getResultMsg());
+            switch (response.getResultCode()){
+                case "3":
+                    //成功
+                    break;
+                case "4":
+                    //失败
+                    throw new BusinessException(response.getResultMsg());
+            }
         }catch (BusinessException e){
             logger.error("支付异常"+e);
             throw new BusinessException(e.getMessage());
@@ -682,7 +688,7 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
                     break;
                 case "4":
                     //失败
-                    throw new BusinessException("重新获取验证码失败");
+                    throw new BusinessException(rsp.getResultMsg());
             }
         }
         catch (BusinessException e){
