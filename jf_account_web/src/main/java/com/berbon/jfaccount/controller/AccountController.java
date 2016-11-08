@@ -224,13 +224,15 @@ public class AccountController {
             pageMap.put("cardCount", 0);
 
 
-        //fixme 账户余额
-        int balance = accountRpcService.queryBalance(user.getUserCode(), 8);
-        logger.info(user.getUserCode()+",余额"+balance);
-        int freezeBalance = 0;
+        ActBanlanceResponse rsp = accountRpcService.queryAllBalance(user.getUserCode(), 8);
+
+        long actBalance = rsp.getActBalance();
+        long freezeBalance = rsp.getFreezeBalance();
+        logger.info(user.getUserCode()+",余额"+actBalance);
+
         //账户余额
-        pageMap.put("actBalance", MyUtils.fen2yuan((balance + freezeBalance)).toString());
-        pageMap.put("leftBalance", MyUtils.fen2yuan((balance)).toString() );
+        pageMap.put("actBalance", MyUtils.fen2yuan((actBalance + freezeBalance)).toString());
+        pageMap.put("leftBalance", MyUtils.fen2yuan((actBalance)).toString() );
         pageMap.put("freezeBalance", MyUtils.fen2yuan(freezeBalance).toString());
 
         //用户最后登录信息,用户姓名
