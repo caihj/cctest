@@ -131,4 +131,7 @@ public interface AccountFacade {
      */
 
     long queryHisPayFlowCount(Date startDate,Date endDate,String userid,String orderNo);
+
+
+    UserBaseInfo  getPartnerInfo(String userCode);
 }

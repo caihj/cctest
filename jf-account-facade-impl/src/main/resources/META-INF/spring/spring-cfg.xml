@@ -120,6 +120,38 @@
 	</bean>
 
 
+	<bean id="newpaymasterDataSource" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
+		<property name="poolProperties">
+			<bean class="org.apache.tomcat.jdbc.pool.PoolProperties">
+				<property name="driverClassName" value="${newpayMaster.jdbc.driver}" />
+				<property name="url" value="${newpayMaster.jdbc.url}" />
+				<property name="username" value="${newpayMaster.jdbc.username}" />
+				<property name="password" value="${newpayMaster.jdbc.password}" />
+				<property name="jmxEnabled" value="true" />
+				<property name="testWhileIdle" value="true" />
+				<property name="testOnBorrow" value="true" />
+				<property name="testOnReturn" value="false" />
+				<property name="validationInterval" value="30000" />
+				<property name="validationQuery" value="SELECT 1" />
+				<property name="timeBetweenEvictionRunsMillis" value="30000" />
+				<property name="maxActive" value="5" />
+				<property name="initialSize" value="1" />
+				<property name="maxWait" value="10000" />
+				<property name="minEvictableIdleTimeMillis" value="30000" />
+				<property name="minIdle" value="1" />
+				<property name="maxIdle" value="3" />
+				<property name="logAbandoned" value="false" />
+				<property name="removeAbandoned" value="true" />
+				<property name="removeAbandonedTimeout" value="60" />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="newpayMasterTemplate" class="com.pay1pay.framework.core.spring.Pay1payJdbcTemplate">
+		<property name="dataSource" ref="newpaymasterDataSource" />
+	</bean>
+
+
 	<bean id="newpayslaveDataSource" class="org.apache.tomcat.jdbc.pool.DataSource" destroy-method="close">
 		<property name="poolProperties">
 			<bean class="org.apache.tomcat.jdbc.pool.PoolProperties">

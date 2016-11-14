@@ -12,6 +12,7 @@ import com.berbon.jfaccount.pojo.ChargeRecord;
 import com.berbon.jfaccount.pojo.TransferData;
 import com.berbon.jfaccount.utils.MyUtils;
 import com.berbon.user.pojo.Users;
+import com.berbon.util.String.StringUtil;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
 import com.sztx.pay.center.rpc.api.domain.*;
@@ -745,6 +746,155 @@ public class AccountController {
 
         return result;
     }
+
+
+    private final static String hbasePageIndex="hbasePageIndex";
+    /**
+     * 查询三个月前资金流水
+     * @return
+     */
+    @RequestMapping(value = "/cashRecordThrMnAgo" ,method ={ RequestMethod.POST, RequestMethod.GET})
+    @ResponseBody
+    public JsonResult querycashRecordThreeMonthAgo(HttpServletRequest request){
+
+        JsonResult result = new JsonResult();
+
+        String pageNo = request.getParameter("pageNo");
+        String pageSize = request.getParameter("pageSize");
+        String startTime = request.getParameter("startTime");
+        String endTime = request.getParameter("endTime");
+        String tradeOrderNo = request.getParameter("tradeOrderNo");
+        String type = request.getParameter("type");
+
+        if(StringUtil.isNull(pageSize,pageNo,startTime,endTime)){
+            result.setResult(ResultAck.para_error);
+            return result;
+        }
+
+        int i_pageSize=10;
+        int i_pageNo = 1;
+
+
+        i_pageSize = Integer.parseInt(pageSize);
+        i_pageNo = Integer.parseInt(pageNo);
+
+
+        UserActFlowHbaseRequest req = new UserActFlowHbaseRequest();
+
+        if(tradeOrderNo!=null && tradeOrderNo.trim().isEmpty()==false){
+            req.setOriginOrderNo(tradeOrderNo);
+        }
+
+        Users user = CheckLoginInterceptor.getUsers(request.getSession());
+
+        req.setUserId(user.getUserCode());
+        if(type!=null){
+            if(type.equals("in")){
+                req.setInOrOut(1);
+            }else if(type.equals("out")){
+                req.setInOrOut(2);
+            }
+        }
+
+        req.setChannelId(initBean.channelId);
+        req.setPageSize(i_pageSize);
+
+        try {
+            req.setStartDate(new SimpleDateFormat("yyyy-MM-dd").parse(startTime));
+            req.setEndDate(new SimpleDateFormat("yyyy-MM-dd").parse(endTime));
+        } catch (ParseException e) {
+            logger.error("发生异常" + e);
+            e.printStackTrace();
+            result.setResult(ResultAck.fail.getCode());
+            result.setRetinfo(ResultAck.fail.getDesc());
+            return result;
+        }
+
+
+
+        if(i_pageNo>1){
+            Map<Integer,String> index= (Map<Integer,String>)request.getSession().getAttribute(hbasePageIndex);
+            String p = index.get(i_pageNo);
+            if(p!=null ){
+                req.setNextPageStartRowKey(p);
+            }else {
+                result.setData(null);
+                result.setResult(ResultAck.succ);
+                return  result;
+            }
+        }
+        try{
+
+            UserActFlowHbaseResponse rsp = userActFlowRpcService.findHbaseUserActFlow(req);
+
+            Map<Integer,String> index= (Map<Integer,String>)request.getSession().getAttribute(hbasePageIndex);
+
+            if(index==null){
+                index = new HashMap();
+            }
+
+            if(rsp.getHasNextPage()){
+                index.put(i_pageNo+1,rsp.getNextPageStartRowKey());
+            }
+
+            Iterator<Map.Entry<Integer, String>> ite = index.entrySet().iterator();
+            for(;ite.hasNext();){
+                if(ite.next().getKey()>i_pageNo+1){
+                    ite.remove();
+                }
+            }
+
+            request.getSession().setAttribute(hbasePageIndex,index);
+
+            JSONObject json = new JSONObject();
+            json.put("pageNo",i_pageNo);
+            json.put("pageSize",i_pageSize);
+            json.put("hasNext",rsp.getHasNextPage());
+            List<UserActFlowResponse.UserActFlow> hisFlow = rsp.getUserActFlowS();
+
+            List<CashRecord> f_records = new ArrayList<>();
+            if(hisFlow!=null){
+                for (UserActFlowResponse.UserActFlow t : hisFlow) {
+                    CashRecord record = new CashRecord();
+                    record.setPayDate(t.getTradeTime());
+                    record.setTradeOrderNo(t.getOriginOrderNo());
+                    record.setTradeOrderType(t.getTradeType());
+
+
+                    String otherAccount = String.format("%s(%s)", t.getOtherUserId() == null ? "" : t.getOtherUserId(), t.getOtherRealName() == null ? "" : t.getOtherRealName());
+                    String intOrOut = "";
+
+                    record.setOtherAccount(otherAccount);
+
+                    record.setAmount(MyUtils.fen2yuan(Math.abs(t.getTranAmount())).toString());
+                    record.setBalance(MyUtils.fen2yuan(t.getActBalance()).toString());
+
+
+                    if (t.getTranAmount() < 0) {
+                        intOrOut = "out";
+                    } else {
+                        intOrOut = "in";
+                    }
+                    record.setType(intOrOut);
+                    f_records.add(record);
+                }
+
+            }
+
+            json.put("payFlows",f_records);
+            result.setData(json);
+            result.setResult(ResultAck.succ);
+
+        }catch (Exception e){
+            logger.info("查询异常"+e);
+            result.setResult(ResultAck.fail.getCode());
+            result.setRetinfo(ResultAck.fail.getDesc());
+            return  result;
+        }
+
+        return  result;
+    }
+
 
     /**
      * 获取支持的银行卡列表

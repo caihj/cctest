@@ -54,6 +54,28 @@ public class MyCardController {
         return "/myCard/addBankCard";
     }
 
+    /**
+     * 实名认证绑卡页面
+     * @param map
+     * @param request
+     * @return
+     */
+    @RequestMapping(value = "/bindAndVerify" ,method = RequestMethod.GET)
+    public String getVerifyBindPage(ModelMap map,HttpServletRequest request){
+
+        Users user = CheckLoginInterceptor.getUsers(request.getSession());
+        UserBaseInfo info = accountFacade.getPartnerInfo(user.getUserCode());
+        if(info!=null){
+            map.put("realName",info.getReal_name());
+            map.put("identityNo",info.getIdentity_num());
+        }else{
+            //fixme 错误页面
+            return "";
+        }
+
+        return "";
+    }
+
 
     @RequestMapping(value = "/bindNewCard.json" , method ={ RequestMethod.POST, RequestMethod.GET})
     @ResponseBody
@@ -67,6 +89,7 @@ public class MyCardController {
         String cvv =  request.getParameter("cvv");
         String expireDate = request.getParameter("expireDate");
         String mobileNo = request.getParameter("mobileNo");
+        String doVerify = request.getParameter("doVerify");
 
         Users user = CheckLoginInterceptor.getUsers(request.getSession());
 
@@ -80,6 +103,13 @@ public class MyCardController {
         req.setCvv(cvv);
         req.setExpireDate(expireDate);
         req.setMobileNo(mobileNo);
+        if(doVerify==null)
+            req.setDoVerify(false);
+        else if(doVerify.equals("1")){
+            req.setDoVerify(true);
+        }else  if(doVerify.equals("0")){
+            req.setDoVerify(false);
+        }
 
         BindNewCardRsp rsp = accountFacade.bindNewBankCard(req);
 

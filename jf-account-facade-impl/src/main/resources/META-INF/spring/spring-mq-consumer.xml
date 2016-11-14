@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:rabbit="http://www.springframework.org/schema/rabbit" xmlns:context="http://www.springframework.org/schema/context"
+	xsi:schemaLocation="http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit-1.0.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+		http://www.springframework.org/schema/context
+		http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+	<!-- 消息处理器 -->
+	<bean id="messageConsumer" class="com.berbon.jfaccount.impl.MqMessageHandler" />
+
+	<!-- 用于消息的监听的代理类 -->
+	<bean id="rabbitListenerAdapter" class="org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter">
+		<constructor-arg index="0" ref="messageConsumer" />
+		<constructor-arg index="1" ref="messageConverter" />
+	</bean>
+
+	<!-- 用于消息的监听的容器 -->
+	<bean id="messageListenerContainer" class="org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer">
+		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="messageListener" ref="rabbitListenerAdapter" />
+		<property name="autoStartup" value="false" />
+	</bean>
+
+	<!-- 消息监听容器代理 -->
+	<bean id="mqListenerContainerProxy" class="com.sztx.se.core.mq.consumer.MqListenerContainerProxy">
+		<property name="queueNames" value="${mq.listener.queues}" />
+		<property name="messageListenerContainer" ref="messageListenerContainer" />
+		<property name="autoStartup" value="${mq.listener.auto.startup}" />
+	</bean>
+
+	<bean id="dynamicMqListenerContainer" class="com.sztx.se.core.mq.source.DynamicMqListenerContainer" />
+	
+	<bean id="dynamicCreateMqListenerManager" class="com.sztx.se.core.mq.source.DynamicCreateMqListenerManager">
+		<property name="dynamicMqListenerContainer" ref="dynamicMqListenerContainer" />
+	</bean>
+	
+</beans>

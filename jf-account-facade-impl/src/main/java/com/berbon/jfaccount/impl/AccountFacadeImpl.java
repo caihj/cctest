@@ -1,10 +1,7 @@
 package com.berbon.jfaccount.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.berbon.jfaccount.Dao.ChargeOrderDao;
-import com.berbon.jfaccount.Dao.TransferOrderDao;
-import com.berbon.jfaccount.Dao.UserActFlowDao;
-import com.berbon.jfaccount.Dao.WithdrawOrderDao;
+import com.berbon.jfaccount.Dao.*;
 import com.berbon.jfaccount.Service.SignService;
 import com.berbon.jfaccount.comm.BusinessType;
 import com.berbon.jfaccount.comm.ErrorCode;
@@ -62,6 +59,9 @@ public class AccountFacadeImpl implements AccountFacade {
 
     @Autowired
     private SignService signService;
+
+    @Autowired
+    private UserBaseInfoDao baseInfoDao;
 
     @Override
     public ChargeOrderInfo createChargeQuckPay(CreateChargeReq data) {
@@ -734,7 +734,7 @@ public class AccountFacadeImpl implements AccountFacade {
         BindNewCardRsp rsp = new BindNewCardRsp();
 
         AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
-        QueryUserInfoService  queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
+        QueryUserInfoService queryUserInfoService = dubboClient.getDubboClient("queryUserInfoService");
 
 
         BindCardRequest bindReq = new BindCardRequest();
@@ -747,19 +747,33 @@ public class AccountFacadeImpl implements AccountFacade {
         bindReq.setCvv(req.getCvv());
         bindReq.setExpireDate(req.getExpireDate());
 
+        if(req.isDoVerify()) {
 
-        UserVO  uservo = queryUserInfoService.getUserInfo(req.getUserCode());
+            UserBaseInfo info = baseInfoDao.getPartInfo(req.getUserCode());
+            if(info==null){
+                rsp.setIsOk(false);
+                rsp.setMsg("未查到用户信息，请联系客服");
+                return  rsp;
+            }
 
-        if(uservo.getIsAuth()==0){
-            logger.error("该用户未实名，不能绑卡");
+            bindReq.setRealName(info.getReal_name());
+            bindReq.setIdentityNo(info.getIdentity_num());
 
-            rsp.setIsOk(false);
-            rsp.setMsg("未实名认证，不能绑卡!");
-            return rsp;
+        }else  {
+            UserVO uservo = queryUserInfoService.getUserInfo(req.getUserCode());
+            if (uservo.getIsAuth() == 0) {
+                logger.error("该用户未实名，不能绑卡");
+
+                rsp.setIsOk(false);
+                rsp.setMsg("未实名认证，不能绑卡!");
+                return rsp;
+            }
+
+            bindReq.setRealName(uservo.getRealname());
+            bindReq.setIdentityNo(uservo.getIdentityid());
         }
 
-        bindReq.setRealName(uservo.getRealname());
-        bindReq.setIdentityNo(uservo.getIdentityid());
+
         bindReq.setMobileNo(req.getMobileNo());
         bindReq.setChannelId(initBean.channelId);
         if("1".equals(req.getCardType())) {
@@ -813,7 +827,6 @@ public class AccountFacadeImpl implements AccountFacade {
             logger.error("发生异常:" + e.getMessage());
             rsp.setMsg(e.getMessage());
         }
-
 
 
         return rsp;
@@ -1106,7 +1119,10 @@ public class AccountFacadeImpl implements AccountFacade {
         return userActFlowDao.getCount(startDate,endDate,userid,orderNo);
     }
 
-
+    @Override
+    public UserBaseInfo getPartnerInfo(String userCode) {
+        return baseInfoDao.getPartInfo(userCode);
+    }
 
 
 }
