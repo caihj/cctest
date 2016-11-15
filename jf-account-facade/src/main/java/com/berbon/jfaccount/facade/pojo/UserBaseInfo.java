@@ -1,9 +1,11 @@
 package com.berbon.jfaccount.facade.pojo;
 
+import java.io.Serializable;
+
 /**
  * Created by chj on 2016/11/11.
  */
-public class UserBaseInfo {
+public class UserBaseInfo implements Serializable{
 
     private Long id;
     private Integer realNameVerified;

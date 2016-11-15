@@ -73,7 +73,7 @@ public class MyCardController {
             return "";
         }
 
-        return "/mycard/bindAndVerify";
+        return "/myCard/bindAndVerify";
     }
 
 
