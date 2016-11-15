@@ -1,6 +1,7 @@
 import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.Dao.ChargeOrderDao;
 import com.berbon.jfaccount.Dao.UserActFlowDao;
+import com.berbon.jfaccount.Dao.UserBaseInfoDao;
 import com.berbon.jfaccount.Dao.WithdrawOrderDao;
 import com.berbon.jfaccount.facade.AccountFacade;
 import com.berbon.jfaccount.facade.pojo.PayFlowData;
@@ -49,6 +50,8 @@ public class SpringTest extends TestCase {
     private DubboClientFactory dubboClient;
 
 
+    @Autowired
+    private UserBaseInfoDao baseInfoDao;
 
 
     @Test
@@ -117,6 +120,15 @@ public class SpringTest extends TestCase {
 
         List<PayFlowData> flows = accountFacade.queryHisPayFlow(20, 30, sd.parse("2016-08-01 00:00:00"), sd.parse("2016-08-08 23:59:59"), "83986576", "");
         System.out.println(JSONObject.toJSONString(flows));
+
+    }
+
+    @Test
+    public void testBaseInfoDao(){
+
+        System.out.println(baseInfoDao.checkisAuth("83986576"));
+        System.out.println(JSONObject.toJSONString(baseInfoDao.getPartInfo("83986576")));
+        baseInfoDao.makeUserVerify(101L,1);
 
     }
 

@@ -756,8 +756,8 @@ public class AccountFacadeImpl implements AccountFacade {
                 return  rsp;
             }
 
-            bindReq.setRealName(info.getReal_name());
-            bindReq.setIdentityNo(info.getIdentity_num());
+            bindReq.setRealName(info.getRealName());
+            bindReq.setIdentityNo(info.getIdentityNum());
 
         }else  {
             UserVO uservo = queryUserInfoService.getUserInfo(req.getUserCode());

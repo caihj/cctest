@@ -28,8 +28,8 @@ public class MqMessageHandler  extends MqMessageListener implements Initializing
         String usercode = "";
 
         UserBaseInfo info = baseInfoDao.getPartInfo(usercode);
-        if(info!=null && info.getReal_name_verified()!=null && info.getReal_name_verified()==0)
-            baseInfoDao.makeUserVerify(usercode,1);
+        if(info!=null && info.getRealNameVerified()!=null && info.getRealNameVerified()==0)
+            baseInfoDao.makeUserVerify(info.getId(),1);
 
         return null;
     }

@@ -33,14 +33,16 @@ public class UserBaseInfoDao {
 
         UserBaseInfo info = null;
         try {
-            info = newpayMasterTemplate.queryForObject(" select real_name_verified from UserBaseInfo where user_code=? ",
+            info = newpayMasterTemplate.queryForObject(" select real_name_verified  as realNameVerified FROM newpay.UserShare  " +
+                            "join UserBaseInfo on UserShare.ub_id=UserBaseInfo.id  where partner_user_id=? ",
                     new Object[]{userCode}, new BaseMapper<UserBaseInfo>(UserBaseInfo.class));
         }catch (Exception e){
             logger.error("数据异常"+e);
+            return  false;
         }
 
         if(info!=null){
-            if(info.getReal_name_verified()==1)
+            if(info.getRealNameVerified()!=0)
                 return true;
             else
                 return false;
@@ -56,7 +58,8 @@ public class UserBaseInfoDao {
     public UserBaseInfo getPartInfo(String userCode){
 
         try{
-            UserBaseInfo  info  = newpayMasterTemplate.queryForObject(" select real_name , identity_num,real_name_verified from UserBaseInfo where user_code=? ",
+            UserBaseInfo  info  = newpayMasterTemplate.queryForObject(" select UserBaseInfo.id,real_name as realName, identity_num as identityNum ,real_name_verified  as realNameVerified FROM newpay.UserShare  " +
+                            "join UserBaseInfo on UserShare.ub_id=UserBaseInfo.id  where partner_user_id=? ",
                 new Object[]{userCode}, new BaseMapper<UserBaseInfo>(UserBaseInfo.class));
             return info;
         }catch (Exception e){
@@ -69,13 +72,13 @@ public class UserBaseInfoDao {
     /**
      * 让某个用户通过实名认证
      *
-     * @param userCode
+     * @param id
      * @param identificate_type  实名认证方式 0-默认 1-快捷 2-打款
      */
-    public void makeUserVerify(String userCode,int identificate_type){
+    public void makeUserVerify(Long id,int identificate_type){
         try{
-            int a= newpayMasterTemplate.update(" update UserBaseInfo set real_name_verified=?,identificate_type=?,verify_time=now() where user_code=? ",
-                    new Object[]{1,identificate_type,userCode});
+            int a= newpayMasterTemplate.update(" update UserBaseInfo set real_name_verified=?,identificate_type=?,verify_time=now() where id=? ",
+                    new Object[]{1,identificate_type,id});
         }catch (Exception e){
             logger.error(e);
         }

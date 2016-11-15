@@ -5,31 +5,41 @@ package com.berbon.jfaccount.facade.pojo;
  */
 public class UserBaseInfo {
 
-    private Integer real_name_verified;
-    private String real_name;
-    private String identity_num;
+    private Long id;
+    private Integer realNameVerified;
+    private String realName;
+    private String identityNum;
 
-    public Integer getReal_name_verified() {
-        return real_name_verified;
+    public Long getId() {
+        return id;
     }
 
-    public void setReal_name_verified(Integer real_name_verified) {
-        this.real_name_verified = real_name_verified;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public String getReal_name() {
-        return real_name;
+
+    public Integer getRealNameVerified() {
+        return realNameVerified;
     }
 
-    public void setReal_name(String real_name) {
-        this.real_name = real_name;
+    public void setRealNameVerified(Integer realNameVerified) {
+        this.realNameVerified = realNameVerified;
     }
 
-    public String getIdentity_num() {
-        return identity_num;
+    public String getRealName() {
+        return realName;
     }
 
-    public void setIdentity_num(String identity_num) {
-        this.identity_num = identity_num;
+    public void setRealName(String realName) {
+        this.realName = realName;
+    }
+
+    public String getIdentityNum() {
+        return identityNum;
+    }
+
+    public void setIdentityNum(String identityNum) {
+        this.identityNum = identityNum;
     }
 }

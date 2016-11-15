@@ -66,14 +66,14 @@ public class MyCardController {
         Users user = CheckLoginInterceptor.getUsers(request.getSession());
         UserBaseInfo info = accountFacade.getPartnerInfo(user.getUserCode());
         if(info!=null){
-            map.put("realName",info.getReal_name());
-            map.put("identityNo",info.getIdentity_num());
+            map.put("realName",info.getRealName());
+            map.put("identityNo",info.getIdentityNum());
         }else{
             //fixme 错误页面
             return "";
         }
 
-        return "";
+        return "/mycard/bindAndVerify";
     }
 
 
