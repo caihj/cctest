@@ -107,6 +107,13 @@ public class InitBean implements InitializingBean {
     @Value("${withDrawBackNotifyUrl}")
     public String WithDrawBackNotifyUrl;
 
+
+    /**
+     * 加款赠送活动
+     */
+    //@Value("${activityGiveMoneyFineUserCode}")
+    public String activityGiveMoneyFineUserCode;
+
     @Override
     public void afterPropertiesSet() throws Exception {
         maxChargeOrderAliveSec = Integer.parseInt(__maxChargeOrderAliveSec);

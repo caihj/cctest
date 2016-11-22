@@ -73,6 +73,9 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
     @Autowired
     private PayOrderDao payOrderDao;
 
+    @Autowired
+    private UserBaseInfoDao baseInfoDao;
+
     @Override
     public String echo(String in) {
         return in;
@@ -289,6 +292,11 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
         UserVO toUesrVo = queryUserInfoService.getUserInfo(req.getPayeeUserId());
         if(toUesrVo == null){
             throw new BusinessException("转入用户不存在!");
+        }
+
+
+        if(baseInfoDao.checkisAuth(req.getPayeeUserId())==false){
+            throw new BusinessException("转入用户未实名认证,不支持转入!");
         }
 
 
@@ -948,9 +956,8 @@ public class AccountMobileFacadeIMpl implements AccountMobileFacade {
 
         if(orderInfo.getDownOrderTime()!=null)
             payReq.setOrderTime(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(orderInfo.getDownOrderTime()));
-        else
 
-        payReq.setIsUsePwd("1");
+
         payReq.setChannelId(initBean.channelId);
         payReq.setBusinessType(orderInfo.getTradeType().type + "");
         payReq.setProductType(2);

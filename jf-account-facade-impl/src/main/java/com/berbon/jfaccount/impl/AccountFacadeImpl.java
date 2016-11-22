@@ -348,6 +348,12 @@ public class AccountFacadeImpl implements AccountFacade {
             }
         }
 
+        if(baseInfoDao.checkisAuth(toUser.getUserCode())==false){
+            rsp.setCanTransfer(false);
+            rsp.setMsg("转入用户未实名认证,不支持转入!");
+            return rsp;
+        }
+
 
         AccountRpcService accountRpcService = dubboClient.getDubboClient("accountRpcService");
         boolean isTongxingUser =true;// accountRpcService.checkUserValid(data.getToUserCode());
