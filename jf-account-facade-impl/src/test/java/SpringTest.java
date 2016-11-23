@@ -1,9 +1,9 @@
 import com.alibaba.fastjson.JSONObject;
-import com.berbon.jfaccount.Dao.ChargeOrderDao;
-import com.berbon.jfaccount.Dao.UserActFlowDao;
-import com.berbon.jfaccount.Dao.UserBaseInfoDao;
-import com.berbon.jfaccount.Dao.WithdrawOrderDao;
+import com.berbon.jfaccount.Dao.*;
+import com.berbon.jfaccount.Service.MCAutoTranserService;
 import com.berbon.jfaccount.facade.AccountFacade;
+import com.berbon.jfaccount.facade.pojo.AcquireTransferReq;
+import com.berbon.jfaccount.facade.pojo.AcquireTransferRsp;
 import com.berbon.jfaccount.facade.pojo.PayFlowData;
 import com.berbon.jfaccount.facade.pojo.WithdrawOrderInfo;
 import com.berbon.jfaccount.pojo.UserActFlow;
@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -53,6 +54,14 @@ public class SpringTest extends TestCase {
     @Autowired
     private UserBaseInfoDao baseInfoDao;
 
+    @Autowired
+    private MasterChildRelateDao masterChildRelateDao;
+
+    @Autowired
+    private TransferOrderDao transferOrderDao;
+
+    @Autowired
+    private MCAutoTranserService service;
 
     @Test
     public void testDao(){
@@ -128,10 +137,57 @@ public class SpringTest extends TestCase {
 
         System.out.println(baseInfoDao.checkisAuth("83986576"));
         System.out.println(JSONObject.toJSONString(baseInfoDao.getPartInfo("83986576")));
-        baseInfoDao.makeUserVerify(101L,1);
+        baseInfoDao.makeUserVerify(101L, 1);
 
     }
 
+    @Test
+    public void MCTest(){
+        Object obj = masterChildRelateDao.get("");
+        System.out.println(JSONObject.toJSONString(obj));
+    }
+
+    @Test
+    public void transferTest(){
+
+        Calendar cal =  Calendar.getInstance();
+
+
+        cal.set(Calendar.DAY_OF_MONTH, cal.getActualMinimum(Calendar.DAY_OF_MONTH));
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+
+        Date begin = cal.getTime();
+
+        cal =  Calendar.getInstance();
+        cal.set(Calendar.DAY_OF_MONTH,cal.getActualMaximum(Calendar.DAY_OF_MONTH));
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE,59);
+        cal.set(Calendar.SECOND, 59);
+        Date end  = cal.getTime();
+
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        System.out.println(JSONObject.toJSONString(sdf.format(begin)));
+        System.out.println(JSONObject.toJSONString(sdf.format(end)));
+
+        Object obj = transferOrderDao.getTotalAmount(begin,end,"100102985","83986576","2020");
+
+        System.out.println(JSONObject.toJSONString(obj));
+    }
+
+
+    @Test
+    public void MCTransferTest(){
+        AcquireTransferReq req = new AcquireTransferReq();
+        req.userCode = "83986576";
+        req.amount = 1L;
+        req.bussOrderId = "testbuss"+new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
+        req.ip = "127.0.0.1";
+        AcquireTransferRsp rsp = service.transfer(req);
+
+        System.out.println(JSONObject.toJSONString(rsp));
+    }
 
 
 

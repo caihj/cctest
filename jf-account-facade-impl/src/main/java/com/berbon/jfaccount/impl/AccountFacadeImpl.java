@@ -2,6 +2,7 @@ package com.berbon.jfaccount.impl;
 
 import com.alibaba.fastjson.JSONObject;
 import com.berbon.jfaccount.Dao.*;
+import com.berbon.jfaccount.Service.MCAutoTranserService;
 import com.berbon.jfaccount.Service.SignService;
 import com.berbon.jfaccount.comm.BusinessType;
 import com.berbon.jfaccount.comm.ErrorCode;
@@ -62,6 +63,9 @@ public class AccountFacadeImpl implements AccountFacade {
 
     @Autowired
     private UserBaseInfoDao baseInfoDao;
+
+    @Autowired
+    private MCAutoTranserService mcTransferService;
 
     @Override
     public ChargeOrderInfo createChargeQuckPay(CreateChargeReq data) {
@@ -598,8 +602,7 @@ public class AccountFacadeImpl implements AccountFacade {
         orderInfo.setExpireTime(cal.getTime());
 
         orderInfo.setChannelId(initBean.channelId);
-        orderInfo.setBusinessType(BusinessType.type_2014.type+"");
-        orderInfo.setRealName(toUser.getRealname());
+        orderInfo.setBusinessType(BusinessType.type_2014.type + "");
         orderInfo.setReference(req.getReference());
         orderInfo.setOrderState(TransferOrderDao.OrderState.wait_pay.state);
         orderInfo.setOrderStateDesc(TransferOrderDao.OrderState.wait_pay.desc);
@@ -1131,4 +1134,13 @@ public class AccountFacadeImpl implements AccountFacade {
     }
 
 
+    /**
+     * 申请主账户向子账户转账,同步返回转账结果。
+     *
+     * @param req
+     */
+    @Override
+    public AcquireTransferRsp acquireMasChdTransfer(AcquireTransferReq req) {
+       return  mcTransferService.transfer(req);
+    }
 }

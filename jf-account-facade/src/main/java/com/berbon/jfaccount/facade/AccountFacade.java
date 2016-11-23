@@ -134,4 +134,10 @@ public interface AccountFacade {
 
 
     UserBaseInfo  getPartnerInfo(String userCode);
+
+
+    /**
+     * 申请主账户向子账户转账,同步返回转账结果。
+     */
+    AcquireTransferRsp acquireMasChdTransfer(AcquireTransferReq req);
 }

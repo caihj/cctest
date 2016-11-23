@@ -17,6 +17,7 @@
 		<property name="username" value="${mq.username}" />
 		<property name="password" value="${mq.password}" />
 	</bean>
-
+	<rabbit:admin connection-factory="connectionFactory"/>
 	<import resource="spring-mq-consumer.xml" />
+	<import resource="spring-mq-consumer-ext.xml"/>
 </beans>

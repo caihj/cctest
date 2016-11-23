@@ -12,8 +12,13 @@ import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
-import java.sql.*;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by chj on 2016/8/10.
@@ -276,7 +281,16 @@ public class TransferOrderDao  {
     }
 
 
+    /**
+     * 获取一定时间，指定账号的转入量
+     * @return
+     */
+    public long getTotalAmount(Date beginTime,Date endTime,String fromUserCode,String toUserCode,String bussType){
 
+        return masterTemplate.queryForLong("SELECT sum(amount) FROM account_transfer_order\n" +
+                "where fromUserCode=? and toUserCode=? and createTime between ? and ? and businessType=?",
+                new Object[]{fromUserCode,toUserCode,beginTime,endTime,bussType});
+    }
 
 
 
