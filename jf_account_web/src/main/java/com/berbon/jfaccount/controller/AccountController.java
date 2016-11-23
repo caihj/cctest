@@ -245,6 +245,12 @@ public class AccountController {
             //pageMap.put("isNeedDigitalCert",userVO);
         map.put("map",pageMap);
 
+        UserBaseInfo info = accountFacade.getPartnerInfo(user.getUserCode());
+        if(info.getRealNameVerified()==1)
+            map.put("isVerify","1");
+        else
+            map.put("isVerify",0);
+
         return "/account/index";
     }
 

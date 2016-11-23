@@ -42,7 +42,7 @@ public class UserBaseInfoDao {
         }
 
         if(info!=null){
-            if(info.getRealNameVerified()!=0)
+            if(info.getRealNameVerified()==1)
                 return true;
             else
                 return false;

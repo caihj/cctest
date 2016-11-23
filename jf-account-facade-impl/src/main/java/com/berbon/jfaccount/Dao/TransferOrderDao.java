@@ -2,6 +2,7 @@ package com.berbon.jfaccount.Dao;
 
 import com.berbon.jfaccount.facade.common.PageResult;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
+import com.berbon.jfaccount.util.Pair;
 import com.berbon.util.mapper.BaseMapper;
 import com.pay1pay.hsf.common.logger.Logger;
 import com.pay1pay.hsf.common.logger.LoggerFactory;
@@ -13,12 +14,14 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Component;
 
 
+import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Created by chj on 2016/8/10.
@@ -283,13 +286,23 @@ public class TransferOrderDao  {
 
     /**
      * 获取一定时间，指定账号的转入量
-     * @return
+     * @return Pair.first 总金额
+     *         Pair.second 总次数
      */
-    public long getTotalAmount(Date beginTime,Date endTime,String fromUserCode,String toUserCode,String bussType){
+    public Pair<Long,Long> getTotalAmountAndCount(Date beginTime,Date endTime,String fromUserCode,String toUserCode,String bussType){
 
-        return masterTemplate.queryForLong("SELECT sum(amount) FROM account_transfer_order\n" +
+        Map<String,Object> map = masterTemplate.queryForMap("SELECT sum(amount) as totalAmount,count(*) as totalCount  FROM account_transfer_order\n" +
                 "where fromUserCode=? and toUserCode=? and createTime between ? and ? and businessType=?",
-                new Object[]{fromUserCode,toUserCode,beginTime,endTime,bussType});
+                fromUserCode,toUserCode,beginTime,endTime,bussType);
+
+        BigDecimal totalAmount = (BigDecimal)map.get("totalAmount");
+        if(totalAmount==null){
+            totalAmount = new BigDecimal(0);
+        }
+        Long totalCount = (Long) map.get("totalCount");
+
+        Pair<Long,Long> p = new Pair(totalAmount.longValue(),totalCount.longValue());
+        return  p;
     }
 
 

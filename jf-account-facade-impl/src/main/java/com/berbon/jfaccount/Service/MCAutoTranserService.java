@@ -10,6 +10,7 @@ import com.berbon.jfaccount.facade.pojo.AcquireTransferReq;
 import com.berbon.jfaccount.facade.pojo.AcquireTransferRsp;
 import com.berbon.jfaccount.facade.pojo.TransferOrderInfo;
 import com.berbon.jfaccount.pojo.MasterChildRelate;
+import com.berbon.jfaccount.util.Pair;
 import com.berbon.jfaccount.util.UtilTool;
 import com.sztx.pay.center.rpc.api.domain.TradeResponse;
 import com.sztx.pay.center.rpc.api.domain.TransferRequest;
@@ -69,9 +70,23 @@ public class MCAutoTranserService {
 
         data = list.get(0);
 
+
+
+        if (req.amount > data.getMaxSingleTrans()) {
+            logger.error("单笔交易额超限");
+            rsp.ack = AcquireTransferRsp.ACK.FAIL;
+            rsp.msg = "单笔交易额超限";
+            return rsp;
+        }
+
+
+        Calendar cal;
+        Date begin;
+        Date end;
+
         //统计月限额
 
-        Calendar cal = Calendar.getInstance();
+        cal = Calendar.getInstance();
 
 
         cal.set(Calendar.DAY_OF_MONTH, cal.getActualMinimum(Calendar.DAY_OF_MONTH));
@@ -80,7 +95,7 @@ public class MCAutoTranserService {
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
 
-        Date begin = cal.getTime();
+        begin = cal.getTime();
 
         cal = Calendar.getInstance();
         cal.set(Calendar.DAY_OF_MONTH, cal.getActualMaximum(Calendar.DAY_OF_MONTH));
@@ -88,23 +103,51 @@ public class MCAutoTranserService {
         cal.set(Calendar.MINUTE, 59);
         cal.set(Calendar.SECOND, 59);
         cal.set(Calendar.MILLISECOND, 999);
-        Date end = cal.getTime();
+        end = cal.getTime();
 
-        Long totalAmount = transferOrderDao.getTotalAmount(begin, end, data.getMasterUserCode(), data.getChildUserCode(), BusinessType.type_2020.type + "");
+        Pair<Long, Long> MonTotal = transferOrderDao.getTotalAmountAndCount(begin, end, data.getMasterUserCode(), data.getChildUserCode(), BusinessType.type_2020.type + "");
 
-        logger.info("当月交易总额:{}", totalAmount);
+        logger.info("当月交易总额:{}", JSONObject.toJSON(MonTotal));
 
-        if (totalAmount + req.amount > data.getMaxTransMonth()) {
+        if (MonTotal.first + req.amount > data.getMaxTransMonth()) {
             logger.error("当月最大交易额超限");
             rsp.ack = AcquireTransferRsp.ACK.FAIL;
             rsp.msg = "当月最大交易额超限";
             return rsp;
         }
 
-        if (req.amount > data.getMaxSingleTrans()) {
-            logger.error("当月最大交易额超限");
+        //统计日限额
+
+        cal = Calendar.getInstance();
+
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+
+        begin = cal.getTime();
+
+        cal = Calendar.getInstance();
+        cal.set(Calendar.HOUR_OF_DAY, 23);
+        cal.set(Calendar.MINUTE, 59);
+        cal.set(Calendar.SECOND, 59);
+        cal.set(Calendar.MILLISECOND, 999);
+        end = cal.getTime();
+
+        Pair<Long, Long> dayTotal = transferOrderDao.getTotalAmountAndCount(begin, end, data.getMasterUserCode(), data.getChildUserCode(), BusinessType.type_2020.type + "");
+
+        logger.info("当日交易总额:{}", JSONObject.toJSON(dayTotal));
+        if(dayTotal.first + req.amount > data.getMaxDayAmount()){
+            logger.error("当日最大交易额超限");
             rsp.ack = AcquireTransferRsp.ACK.FAIL;
-            rsp.msg = "单笔交易额超限";
+            rsp.msg = "当日最大交易额超限";
+            return rsp;
+        }
+
+        if(dayTotal.second +1 > data.getMaxDayCount()){
+            logger.error("当日最大交易次数超限");
+            rsp.ack = AcquireTransferRsp.ACK.FAIL;
+            rsp.msg = "当日最大交易次数超限";
             return rsp;
         }
 

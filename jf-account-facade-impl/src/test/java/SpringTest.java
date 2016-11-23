@@ -7,6 +7,7 @@ import com.berbon.jfaccount.facade.pojo.AcquireTransferRsp;
 import com.berbon.jfaccount.facade.pojo.PayFlowData;
 import com.berbon.jfaccount.facade.pojo.WithdrawOrderInfo;
 import com.berbon.jfaccount.pojo.UserActFlow;
+import com.berbon.jfaccount.util.Pair;
 import com.sztx.se.rpc.dubbo.client.DubboClient;
 import com.sztx.se.rpc.dubbo.client.DubboClientFactory;
 import com.sztx.usercenter.rpc.api.domain.out.UserVO;
@@ -163,7 +164,7 @@ public class SpringTest extends TestCase {
         cal =  Calendar.getInstance();
         cal.set(Calendar.DAY_OF_MONTH,cal.getActualMaximum(Calendar.DAY_OF_MONTH));
         cal.set(Calendar.HOUR_OF_DAY, 23);
-        cal.set(Calendar.MINUTE,59);
+        cal.set(Calendar.MINUTE, 59);
         cal.set(Calendar.SECOND, 59);
         Date end  = cal.getTime();
 
@@ -171,9 +172,11 @@ public class SpringTest extends TestCase {
         System.out.println(JSONObject.toJSONString(sdf.format(begin)));
         System.out.println(JSONObject.toJSONString(sdf.format(end)));
 
-        Object obj = transferOrderDao.getTotalAmount(begin,end,"100102985","83986576","2020");
+        Pair<Long,Long> obj = transferOrderDao.getTotalAmountAndCount(begin,end,"100102985","83986576","2020");
 
         System.out.println(JSONObject.toJSONString(obj));
+        System.out.println(JSONObject.toJSONString(obj.second.getClass().getName()));
+        System.out.println(JSONObject.toJSONString(obj.first.getClass().getName()));
     }
 
 
@@ -181,7 +184,7 @@ public class SpringTest extends TestCase {
     public void MCTransferTest(){
         AcquireTransferReq req = new AcquireTransferReq();
         req.userCode = "83986576";
-        req.amount = 1L;
+        req.amount = 100000L;
         req.bussOrderId = "testbuss"+new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
         req.ip = "127.0.0.1";
         AcquireTransferRsp rsp = service.transfer(req);

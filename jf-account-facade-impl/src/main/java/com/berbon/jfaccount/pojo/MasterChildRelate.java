@@ -45,6 +45,17 @@ public class MasterChildRelate {
      */
     private Long maxSingleTrans;
 
+
+    /**
+     * 日总限额
+     */
+    private Long maxDayAmount;
+
+    /**
+     * 日总次数
+     */
+    private Long maxDayCount;
+
     public Long getId() {
         return id;
     }
@@ -107,5 +118,21 @@ public class MasterChildRelate {
 
     public void setMaxSingleTrans(Long maxSingleTrans) {
         this.maxSingleTrans = maxSingleTrans;
+    }
+
+    public Long getMaxDayAmount() {
+        return maxDayAmount;
+    }
+
+    public void setMaxDayAmount(Long maxDayAmount) {
+        this.maxDayAmount = maxDayAmount;
+    }
+
+    public Long getMaxDayCount() {
+        return maxDayCount;
+    }
+
+    public void setMaxDayCount(Long maxDayCount) {
+        this.maxDayCount = maxDayCount;
     }
 }

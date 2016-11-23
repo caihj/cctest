@@ -19,13 +19,12 @@ public class MasterChildRelateDao {
 
     private static Logger logger = LoggerFactory.getLogger(MasterChildRelateDao.class);
 
+
     @Autowired
-    private JdbcTemplate masterTemplate;
-    @Autowired
-    private JdbcTemplate slaveTemplate;
+    private JdbcTemplate newpayslaveTemplate;
 
     public List<MasterChildRelate> get (String childUserCode) throws DataAccessException {
-        List<MasterChildRelate> relate = slaveTemplate.query("select * from account_master_child_relate where state=1 and childUserCode=?",
+        List<MasterChildRelate> relate = newpayslaveTemplate.query("select * from account_master_child_relate where state=1 and childUserCode=?",
                 new Object[]{childUserCode}, new BaseMapper<MasterChildRelate>(MasterChildRelate.class));
         return  relate;
     }

@@ -38,7 +38,7 @@ public class MqMessageHandler  implements MessageListener {
             usercode = obj.userId;
 
             UserBaseInfo info = baseInfoDao.getPartInfo(usercode);
-            if (info != null && info.getRealNameVerified() != null && info.getRealNameVerified() == 0) {
+            if (info != null && info.getRealNameVerified() != null && (info.getRealNameVerified() == 0 || info.getRealNameVerified() == 2)) {
                 logger.info("用户实名 {}", usercode);
                 baseInfoDao.makeUserVerify(info.getId(), 1);
             }
